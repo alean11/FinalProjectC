@@ -27,10 +27,9 @@
 								<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
 								 aria-expanded="false">Weather</a>
 								<ul class="dropdown-menu">
-									<li class="nav-item"><a class="nav-link" href="#">Short-range</a></li>
-									<li class="nav-item"><a class="nav-link" href="#">Medium-range</a></li>
-									<li class="nav-item"><a class="nav-link" href="#">Typhoon</a></li>
-<%-- ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ 날씨: 주희가 메뉴 추가 시, 추가할 것. 메뉴명도 주희 기준으로 맞출 것 ↑↑ --%>
+									<li class="nav-item"><a class="nav-link" href="#">단기예보</a></li>
+									<li class="nav-item"><a class="nav-link" href="#">중기예보</a></li>
+									<li class="nav-item"><a class="nav-link" href="#">태풍예보</a></li>
 								</ul>
 							</li>
 							<li class="nav-item submenu dropdown">

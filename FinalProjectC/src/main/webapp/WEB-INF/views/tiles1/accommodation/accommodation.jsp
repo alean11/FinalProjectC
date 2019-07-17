@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <% String ctxPath = request.getContextPath(); %>
 
@@ -42,7 +43,7 @@ $(document).ready(function(){
             <div class="row">
                 <div class="col-lg-4">
                     <div class="categories_post">
-                        <img src="img/blog/cat-post/cat-post-3.jpg" alt="post">
+                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-3.jpg" alt="post">
                         <div class="categories_details">
                             <div class="categories_text">
                                 <a href="blog-details.html">
@@ -56,7 +57,7 @@ $(document).ready(function(){
                 </div>
                 <div class="col-lg-4">
                     <div class="categories_post">
-                        <img src="img/blog/cat-post/cat-post-2.jpg" alt="post">
+                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-2.jpg" alt="post">
                         <div class="categories_details">
                             <div class="categories_text">
                                 <a href="blog-details.html">
@@ -70,7 +71,7 @@ $(document).ready(function(){
                 </div>
                 <div class="col-lg-4">
                     <div class="categories_post">
-                        <img src="img/blog/cat-post/cat-post-1.jpg" alt="post">
+                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-1.jpg" alt="post">
                         <div class="categories_details">
                             <div class="categories_text">
                                 <a href="blog-details.html">
@@ -117,7 +118,7 @@ $(document).ready(function(){
                             </div>
                             <div class="col-md-9">
                                 <div class="blog_post">
-                                    <img src="img/blog/main-blog/m-blog-1.jpg" alt="">
+                                    <img src="<%= ctxPath%>/resources/img/blog/main-blog/m-blog-1.jpg" alt="">
                                     <div class="blog_details">
                                         <a href="single-blog.html">
                                             <h2>Astronomy Binoculars A Great Alternative</h2>
@@ -149,7 +150,7 @@ $(document).ready(function(){
                             </div>
                             <div class="col-md-9">
                                 <div class="blog_post">
-                                    <img src="img/blog/main-blog/m-blog-2.jpg" alt="">
+                                    <img src="<%= ctxPath%>/resources/img/blog/main-blog/m-blog-2.jpg" alt="">
                                     <div class="blog_details">
                                         <a href="single-blog.html">
                                             <h2>The Basics Of Buying A Telescope</h2>
@@ -181,7 +182,7 @@ $(document).ready(function(){
                             </div>
                             <div class="col-md-9">
                                 <div class="blog_post">
-                                    <img src="img/blog/main-blog/m-blog-3.jpg" alt="">
+                                    <img src="<%= ctxPath%>/resources/img/blog/main-blog/m-blog-3.jpg" alt="">
                                     <div class="blog_details">
                                         <a href="single-blog.html">
                                             <h2>The Glossary Of Telescopes</h2>
@@ -213,7 +214,7 @@ $(document).ready(function(){
                             </div>
                             <div class="col-md-9">
                                 <div class="blog_post">
-                                    <img src="img/blog/main-blog/m-blog-4.jpg" alt="">
+                                    <img src="<%= ctxPath%>/resources/img/blog/main-blog/m-blog-4.jpg" alt="">
                                     <div class="blog_details">
                                         <a href="single-blog.html">
                                             <h2>The Night Sky</h2>
@@ -245,7 +246,7 @@ $(document).ready(function(){
                             </div>
                             <div class="col-md-9">
                                 <div class="blog_post">
-                                    <img src="img/blog/main-blog/m-blog-5.jpg" alt="">
+                                    <img src="<%= ctxPath%>/resources/img/blog/main-blog/m-blog-5.jpg" alt="">
                                     <div class="blog_details">
                                         <a href="single-blog.html">
                                             <h2>Telescopes 101</h2>
@@ -310,7 +311,7 @@ $(document).ready(function(){
 									<div class="default-select" id="default-select" style="width: 160px; display: inline-flex;">
 										<select>
 											<option value="">좋음</option>
-											<option value="">애매함?</option>
+											<option value="">흐림</option>
 											<option value="">나쁨</option>
 										</select>
 									</div>
@@ -380,15 +381,6 @@ $(document).ready(function(){
 									</div>
 								</div>
                                </li>
-                               <li>
-								<div class="d-flex justify-content-between">
-									<label for="condo" style="margin-bottom: 0; cursor: pointer;"><a>콘도?</a></label>
-									<div class="primary-checkbox">
-										<input type="checkbox" id="condo" checked>
-										<label for="condo" style="margin-bottom: 0;"></label><%-- 이거 없으면 체크박스 체크 안 됨;; --%>
-									</div>
-								</div>
-                               </li>
                             </ul>
                             <div class="br"></div>
                         </aside>
@@ -417,7 +409,7 @@ $(document).ready(function(){
                             <div class="br"></div>
                         </aside>
 
-                        <%-- **  ** --%>
+<%-- ****** ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 뉴스레터인데, 안 써서 일단 주석문 ************* --%>
                         <aside class="single-sidebar-widget newsletter_widget">
                             <h4 class="widget_title">Newsletter</h4>
                             <p>
