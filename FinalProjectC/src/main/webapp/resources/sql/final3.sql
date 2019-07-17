@@ -306,4 +306,159 @@ region_code number(2)   not null
 commit;
 
 
+-------------- 2019.07.17. 정혜윤: 지역코드 추가
+/* 지역코드
+서울: 1
+경기: 2
+강원: 3
+충북: 4
+충남: 5
+경북: 6
+경남: 7
+전북: 8
+전남: 9
+제주: 10
+*/
+insert into area_tbl(region_code, region_name, region_shortName)
+values(1, '서울', '서울');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(2, '경기도', '경기');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(3, '강원도', '강원');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(4, '충청북도', '충북');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(5, '충청남도', '충남');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(6, '경상북도', '경북');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(7, '경상남도', '경남');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(8, '전라북도', '전북');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(9, '전라남도', '전남');
+insert into area_tbl(region_code, region_name, region_shortName)
+values(10, '제주도', '제주');
+
+commit;
+
+
+
+-------------- 2019.07.17. 정혜윤: 호텔 추가 (경상남도)
+
+------------------------------------ 회사 및 호텔 정보 입력 시작 --------------------------------------------
+/* 호텔 여러 개 있는 기업종류
+
+라마다(ramada), 대명(daemyong), 앰배서더(ambassador), 금호(kumho), 한화(hanhwa),
+켄싱턴(kensington), 힐튼(hilton), 코오롱(kolong), 신라(shinla), 롯데(lotte), 하얏트(hyatt),
+메리어트(marriott), 한진=칼(hanjin)
+
+*/
+
+/*
+select ascii('&') from dual;
+select chr(38) from dual;
+
+select ascii('a') from dual;
+select chr(97) from dual;
+
+select  '스탠포드 호텔'||chr(38)||'리조트 통영' from  dual;
+select replace('스탠포드 호텔}리조트 통영','}',chr(38)) from dual;
+insert into aaa(memo)  values(replace('스탠포드 호텔}리조트 통영','}',chr(38)));
+*/
+
+----------- >>>>>>>>>>>>>> 경상남도 <<<<<<<<<<<<<<<< --------------------------
+
+-- 스탠포드 호텔&리조트 통영
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'stanford', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '스탠포드', '스탠포드', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'stanford', 7, '스탠포드 호텔 리조트 통영', '055', '725', '0000', '530', '79', '경상남도 통영시 도남동 도남로 347', '스탠포드 호텔 리조트 통영', '리조트 통영_HI569533145.jpg', '호텔 설명', '120', default, '호텔', 5);
+
+
+
+-- 라마다 스위츠 거제
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'ramada', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '라마다', '스위츠', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'ramada', 7, '라마다 스위츠 거제', '000', '0000', '0000', '533', '26', '경상남도 거제시 일운면 거제대로 2631', '소동리 라마다호텔', '라마다 거제_HI533294890.jpg',  '호텔설명',  '80', default, '리조트', 5);
+
+
+
+-- 아난티 남해
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'ananti', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '아난티', '아난티', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'ananti',  7,  '아난티 남해',  '000',  '0000',  '0000',  '524',  '33', '경상남도 남해군 남면 남서대로1179번길 40-109', '아난티남해골프장', '아난티 남해_HI549544950.jpg',  '호텔설명',  '220', default, '리조트', 4);
+
+
+
+-- 아이스퀘어호텔
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'isquare', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '아이스퀘어', '스퀘어', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'isquare',  7,  '아이스퀘어호텔',  '000',  '0000',  '0000',  '509',  '40', '경상남도 김해시 김해대로 2360', '부원동 아이스퀘어', '아이스퀘어_HI409061760.jpg',  '호텔설명',  '70', default, '호텔', 4);
+
+
+
+-- 대명리조트 거제마리나
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'daemyong', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '대명', '대명씨', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'daemyong',  7,  '대명리조트 거제마리나',  '000',  '0000',  '0000',  '533',  '26', '경상남도 거제시 일운면 거제대로 2660', '소동리 대명리조트거제휴양콘도미니엄', '대명리조트 거제마리나_HI543279018.jpg',  '호텔설명',  '230', default, '리조트', 4);
+
+
+
+-- 그랜드 머큐어 앰배서더 창원
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'ambassador', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '앰배서더', '앰배씨', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'ambassador',  7,  '그랜드 머큐어 앰배서더 창원',  '000',  '0000',  '0000',  '514',  '08', '경상남도 창원시 의창구 원이대로 332', '대원동 더시티세븐풀만호텔', '그랜드 머큐어 앰배서더_HI552205106.jpg',  '호텔설명',  '70', default, '호텔', 5);
+
+
+
+-- 금호 통영 마리나 리조트
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'kumho', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '금호', '아시아나', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'kumho',  7,  '금호 통영 마리나 리조트',  '000',  '0000',  '0000',  '530',  '79', '경상남도 통영시 큰발개1길 33', '도남동 금호충무마리나콘도', '금호 통영_HI519521852.jpg',  '호텔설명',  '82', default, '리조트', 3);
+
+
+
+-- 아르떼리조트
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'arte', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '아르떼', '아르씨', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'arte',  7,  '아르떼리조트',  '000',  '0000',  '0000',  '525',  '54', '경상남도 사천시 해안관광로 109-10', '실안동 아르떼리조트', '아르떼리조트_HI400835701.jpg',  '호텔설명',  '90', default, '호텔', 3);
+
+
+
+-- 한화리조트 거제 벨버디어
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'hanhwa', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '한화', 'ceo이름', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'hanhwa',  7,  '한화리조트 거제 벨버디어',  '000',  '0000',  '0000',  '532',  '00', '경상남도 거제시 장목면 거제북로 2501-40', '농소리 한화리조트거제벨버디어', '한화거제_HI549909636.jpg',  '호텔설명',  '110', default, '리조트', 5);
+
+
+
+-- 프래밀리 호텔
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'frie', '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5', '000', '00', '00000', '프래밀리', '프래씨', '1EysnNW20qS2dPy2JpKDIw==', '000', '0000', '0000', default);
+
+insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_status, acc_type, acc_grade)
+values(seq_acc_tbl.nextval, 'frie',  7,  '프래밀리 호텔',  '000',  '0000',  '0000',  '533',  '29', '경상남도 거제시 일운면 거제대로 2308', '와현리 프래밀리 호텔', '프래밀리_HI360877901.jpg',  '호텔설명',  '88', default, '호텔', 2);
+
+commit;
+
+------------- 
+
 
