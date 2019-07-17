@@ -7,24 +7,24 @@ show user;
 
 --------일반회원테이블  : personal_mbr ------------------
 create table personal_mbr
-(idx number not null
-,p_userid varchar2(20)  not null
-,p_pwd varchar2(300)    not null
-,p_name varchar2(40)    not null
-,p_email varchar2(300)  not null
-,p_birthday varchar2(8) 
-,p_gender number(1)     not null
-,p_hp1 varchar2(3)      not null
-,p_hp2 varchar2(100)    not null
-,p_hp3 varchar2(100)    not null
-,p_post1 varchar2(30)   not null
-,p_post2 varchar2(30)   not null
-,p_addr1 varchar2(90)   not null
-,p_addr2 varchar2(90)   not null
-,p_registerday date default sysdate
-,p_lastlogin date
-,p_lastpwdchg date default sysdate
-,p_status number(1) default 1
+    (idx number not null
+    ,p_userid varchar2(20)  not null
+    ,p_pwd varchar2(300)    not null
+    ,p_name varchar2(40)    not null
+    ,p_email varchar2(300)  not null
+    ,p_birthday varchar2(8) 
+    ,p_gender number(1)     not null
+    ,p_hp1 varchar2(3)      not null
+    ,p_hp2 varchar2(100)    not null
+    ,p_hp3 varchar2(100)    not null
+    ,p_post1 varchar2(30)   not null
+    ,p_post2 varchar2(30)   not null
+    ,p_addr1 varchar2(90)   not null
+    ,p_addr2 varchar2(90)   not null
+    ,p_registerday date default sysdate
+    ,p_lastlogin date
+    ,p_lastpwdchg date default sysdate
+    ,p_status number(1) default 1
 ,constraint PK_personal_mbr primary key(p_userid)
 ,constraint CK_personal_mbr_gender check(p_gender in(1,2))
 );
@@ -148,11 +148,13 @@ create table acc_tbl
 ,acc_text CLOB          not null
 ,acc_Rcnt number(3)     not null
 ,acc_status number(1)   DEFAULT 1
+,acc_type varchar2(10) not null    -- 호텔/리조트    
+,acc_grade number(1) not null      -- 1,2,3,4,5
 ,constraint PK_company_mbr_acc_idx primary key(acc_idx)
 ,constraint FK_comment_tbl_cp_id FOREIGN key(cp_id) references company_mbr(cp_id)
 ,constraint FK_comment_tbl_state FOREIGN key(state) references area_tbl(region_code)
 );
-
+    
 --------업체 시퀀스
 create sequence seq_acc_tbl
 start with 1
@@ -197,9 +199,12 @@ commit;
 create table cart_tbl
 (cartno number
 ,p_userid varchar2(20)  not null
+,p_name     varchar2(40) not null
 ,r_idx number(4)    not null
 ,cart_price varchar2(7)     not null
 ,cart_cnt number(5)     not null
+,startDate  varchar2(20)     not null
+,endDate    varchar2(20)     not null
 ,constraint PK_cart_tbl_cartno primary key(cartno)
 ,constraint FK_room_tbl_r_idx foreign key(r_idx) references room_tbl(r_idx)
 ,constraint FK_personal_mbr_p_userid foreign key(p_userid) references personal_mbr(p_userid)
@@ -295,5 +300,10 @@ create table area_tbl
 (
 region_code number(2)   not null
 ,region_name varchar2(20)   not null
+,region_shortName varchar2(10) not null    
 ,constraint PK_area_tbl_region_code primary key(region_code)
 );
+commit;
+
+
+
