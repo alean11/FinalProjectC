@@ -97,6 +97,31 @@ commit;
 
 
 
+-----------------------------------------------
+----------공지사항테이블----------------------
+create table notice
+(n_idx number
+,n_title varchar2(20)   not null
+,n_context CLOB         not null
+,n_writeday date   DEFAULT sysdate
+,n_viewcnt number(6)    not null
+,status number(1)   DEFAULT 1
+,constraint PK_notice_idx primary key(n_idx)
+);
+
+--------공지사항 시퀀스
+create sequence seq_notice
+start with 1
+increment by 1
+nomaxvalue
+nominvalue
+nocycle
+nocache;
+
+commit;
+
+
+
 -------------------------------------------------
 ----기업회원테이블  :  company_mbr
 create table company_mbr
@@ -149,10 +174,15 @@ create table acc_tbl
 ,acc_status number(1)   DEFAULT 1
 ,acc_type varchar2(10) not null    -- 호텔/리조트    
 ,acc_grade number(1) not null      -- 1,2,3,4,5
-,constraint PK_company_mbr_acc_idx primary key(acc_idx)
+,constraint PK_acc_tbl_acc_idx primary key(acc_idx)
 ,constraint FK_comment_tbl_cp_id FOREIGN key(cp_id) references company_mbr(cp_id)
 ,constraint FK_comment_tbl_state FOREIGN key(state) references area_tbl(region_code)
 );
+-- 2019.07.22. 정혜윤: 제약조건 이름 변경함. (기존에 회사 테이블 이름이 들어가 있어서, 업체 테이블 이름으로 바꿔줌.)
+-- ALTER TABLE acc_tbl RENAME CONSTRAINT PK_company_mbr_acc_idx TO PK_acc_tbl_acc_idx;
+
+
+
     
 --------업체 시퀀스
 create sequence seq_acc_tbl
@@ -168,20 +198,30 @@ commit;
 
 
 
------------------------------------------------
-----------공지사항테이블----------------------
-create table notice
-(n_idx number
-,n_title varchar2(20)   not null
-,n_context CLOB         not null
-,n_writeday date   DEFAULT sysdate
-,n_viewcnt number(6)    not null
-,status number(1)   DEFAULT 1
-,constraint PK_notice_idx primary key(n_idx)
+------------------------------------------------
+---------객실테이블 : room_tbl
+create table room_tbl
+(r_idx number                            -- 방 고유번호. PK.
+,FK_acc_idx number           not null    -- 업체 테이블의 고유번호. 업체 테이블의 acc_idx를 참조하고 있음.
+,FK_rtype_idx varchar2(40)               -- 방 종류 고유번호. 방 종류 테이블의 rtype_idx를 참조하고 있음.
+,r_text CLOB                 not null
+,ay_fee number(8)            not null
+,k_fee number(8)             not null
+,constraint PK_room_tbl_r_idx primary key(r_idx)
+,constraint FK_acc_tbl_acc_idx foreign key(acc_idx) references acc_tbl(acc_idx)
 );
+-- 2019.07.22. 정혜윤 추가: 방 종류 테이블 추가하면서, 객실 테이블도 이하와 같이 수정
+-- ALTER TABLE room_tbl DROP (r_cnt);
+-- ALTER TABLE room_tbl DROP COLUMN r_kind;
+-- ALTER TABLE room_tbl ADD(FK_rtype_idx number);
+-- ALTER TABLE room_tbl ADD CONSTRAINT FK_room_tbl_acc_idx FOREIGN KEY(FK_acc_idx) REFERENCES acc_tbl(acc_idx);
+-- ALTER TABLE room_tbl ADD CONSTRAINT FK_room_tbl_rtype_idx FOREIGN KEY(FK_rtype_idx) REFERENCES room_type_tbl(rtype_idx);
+SELECT *
+FROM user_constraints
+WHERE table_name = 'ROOM_TBL';
 
---------공지사항 시퀀스
-create sequence seq_notice
+--------객실테이블 시퀀스
+create sequence seq_room_tbl
 start with 1
 increment by 1
 nomaxvalue
@@ -191,6 +231,27 @@ nocache;
 
 commit;
 
+
+--------- 2109. 07. 22. 정혜윤 방 종류 테이블 생성
+---- 방 종류 테이블: room_kind_tbl
+create table room_type_tbl
+(rtype_idx    number             -- 방 종류 고유 코드번호
+,FK_acc_idx  number not null    -- 호텔(업체) 고유 번호(참조함.)
+,rtype_Name  varchar2(60)       -- 방 종류 이름
+,rtype_cnt   number(3)          -- 방 종류 개수
+,constraint PK_room_type_tbl_room_idx primary key(room_idx)
+,constraint FK_room_type_tbl_FK_acc_idx foreign key(FK_acc_idx) references acc_tbl(acc_idx)
+);
+-- 방 종류 테이블 시퀀스
+create sequence seq_room_type_tbl
+start with 1
+increment by 1
+nomaxvalue
+nominvalue
+nocycle
+nocache;
+
+commit;
 
 
 ------------------------------------------------------------------
@@ -221,33 +282,6 @@ nocache;
 commit;
 
 
-------------------------------------------------
----------객실테이블 : room_tbl
-create table room_tbl
-(r_idx number
-,acc_idx number         not null
-,r_kind varchar2(40)    not null
-,r_text CLOB            not null
-,r_cnt number(2)        not null
-,ay_fee number(8)       not null
-,k_fee number(8)        not null
-,constraint PK_room_tbl_r_idx primary key(r_idx)
-,constraint FK_acc_tbl_acc_idx foreign key(acc_idx) references acc_tbl(acc_idx)
-);
-
---------객실테이블 시퀀스
-create sequence seq_room_tbl
-start with 1
-increment by 1
-nomaxvalue
-nominvalue
-nocycle
-nocache;
-
-commit;
-
-
-
 ---------------------------------------------------------------
 -- 예약여부확인 테이블 : booking_ck
 create table booking_ck
@@ -274,14 +308,16 @@ create table barmenity
 ---------------------------------------------
 -- 추가이미지 테이블 : addtional_img
 create table addtional_img
-(r_idx number   not null
+(acc_idx number   not null  -- 2019.07.22. 정혜윤 수정: 기존에 room_tbl 참조하던 것을 acc_tbl 참조하던 것으로 바꾸면서, 컬럼도 수정함.
 ,ad_img1 varchar2(100)
 ,ad_img2 varchar2(100)
 ,ad_img3 varchar2(100)
 ,ad_img4 varchar2(100)
 ,ad_img5 varchar2(100)
-,constraint FK_addtional_img_r_idx foreign key(r_idx) references room_tbl(r_idx)
+,constraint FK_addtional_img_acc_idx foreign key(acc_idx) references acc_tbl(acc_idx) -- 2019.07.22. 정혜윤 수정: 기존에 room_tbl 참조하던 것을 acc_tbl 참조하던 것으로 바꿈.
 );
+
+
 
 ---------------------------------------
 -- 태그테이블
@@ -291,6 +327,9 @@ create table acc_tag
 ,cnt		number          DEFAULT 0
 ,constraint FK_acc_tag_acc_idx foreign key(acc_idx) references acc_tbl(acc_idx)
 );
+
+
+
 
 
 --------------------------------------------
@@ -340,6 +379,268 @@ insert into area_tbl(region_code, region_name, region_shortName)
 values(10, '제주도', '제주');
 
 commit;
+
+
+
+
+
+-- 2019.07.21 정혜윤 추가: 호텔 리스트 뽑는 쿼리문(검색어 포함)
+-- 뷰로 만들 필요 없이, 자주 검색되는 것(where절 조건으로 자주 들어가는 것)을 각 테이블에서 인덱스로 만들고, 그 후에 테이블 조인을 해서 where절 조건에 그 인덱스들을 넣어주면 됨.
+-- 그럼 빨라짐. where절 조건에 맞는 애들부터 일단 읽어오기 때문인데, where절 조건이 index니까 빨라지는 것.
+
+-- 컬럼 기준 카운트 개수 실험
+select COUNT(*) OVER (PARTITION BY cp_id)
+from acc_tbl;
+
+-- 쿼리문
+
+select acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
+     , commentCnt, ay_fee, k_fee, book_start, book_end
+from
+   (
+    select E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.commentCnt, E.acc_type
+         , F.ay_fee, F.k_fee, F.book_start, F.book_end
+    from
+    (
+      select C.acc_idx, C.acc_name, C.acc_img, C.acc_text, C.acc_type, C.acc_addr1, C.region_name, D.commentCnt
+      from
+        ( select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name
+          from acc_tbl A LEFT OUTER JOIN area_tbl B
+          ON A.state = B.region_code
+        ) C
+          LEFT OUTER JOIN
+         ( select COUNT(*) OVER (PARTITION BY acc_idx) AS commentCnt, acc_idx
+           from comment_tbl
+           where status = 1
+          ) D
+        ON C.acc_idx = D.acc_idx
+    ) E
+      LEFT OUTER JOIN
+      ( select ay_fee, k_fee, acc_idx, book_start, book_end
+        from room_tbl G LEFT OUTER JOIN booking_ck H
+        ON G.r_idx = H.r_idx
+       ) F
+    ON E.acc_idx = F.acc_idx
+   ) G
+where acc_addr1 like '%'|| '경기' || '%'
+      and (ay_fee*인원수)+(k_fee*인원수) between 검색한 값1 and 검색한 값2
+      and book_start between TO_DATE('2019-07-23','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-25', 'YYYY-MM-DD HH24:MI:SS')
+      and book_end between TO_DATE('2019-07-23','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-25', 'YYYY-MM-DD HH24:MI:SS');
+
+/************************************
+
+select r_idx, fk_acc_idx, r_text, ay_fee,  k_fee,  fk_rtype_idx,
+      (ay_fee * 4) + (k_fee * 4) AS TOTALPAY
+from room_tbl
+where (ay_fee * 4) + (k_fee * 4) between 725845 and 2495784
+
+ and (ay_fee*인원수)+(k_fee*인원수) between 검색한 값1 and 검색한 값2
+
+
+*************************************/
+
+
+
+
+-- 인덱스로 만들 것들
+/*acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
+, commentCnt, ay_fee, k_fee, book_start, book_end */
+
+
+
+/*
+업체: acc_idx
+방 종류: FK_acc_idx, PK_rtype_idx
+객실: FK_acc_idx, FK_rtype_idx, PK_r_idx
+*/
+select acc_name, acc_addr1, acc_idx
+     , rtype_idx, rtype_name
+     , r_idx, r_text, ay_fee, k_fee
+from
+    ( select acc_name, acc_addr1, acc_idx
+           , FK_acc_idx, rtype_idx, rtype_name, rtype_cnt
+      from acc_tbl A LEFT OUTER JOIN room_type_tbl B
+      ON A.acc_idx = B.FK_acc_idx
+    ) C
+    LEFT OUTER JOIN
+    ( select r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee
+      from room_tbl
+    ) D
+ON C.rtype_idx = D.r_idx
+order by rtype_idx;
+
+
+
+
+
+
+
+
+
+
+-------------- 2019.07.22. 정혜윤: 객실, 방종류, 예약 테이블 데이터 몇 개 추가
+
+-- 객실 종류 추가
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 7, '럭셔리룸', 10);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 7, '트윈룸', 18);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 8, '초호화룸', 5);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 8, '스위트룸', 10);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 9, '트윈베드룸', 24);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 9, '스위트룸', 11);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 10, '럭셔리룸', 8);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 11, '스위트룸', 5);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 13, '더블베드룸', 24);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 16, '초호화럭셔리', 7);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 17, '트윈 스위트', 8);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 18, '럭셔리', 3);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 18, '트윈베드', 15);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 22, '스위트룸', 16);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 22, '트윈베드룸', 22);
+
+insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+values(seq_room_type_tbl.nextval, 23, 'vip룸', 3);
+
+
+
+--------- 객실 추가
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 7, 1, '완전 럭셔리', 330000, 180000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 7, 2, '트윈룸임', 200000, 100000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 8, 3, '이런 초호화룸은 존재하지 않는다..', 1000000, 800000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 8, 4, '스위트룸임', 249000, 139000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 9, 5, '트윈 베드룸임.', 118000, 89000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 9, 6, '스위트룸입니다..', 287000, 168000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 10, 7, '완전 럭셔리 할 것 같지? 아니야 돌아가~', 880080, 658000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 11, 8, '스윗해', 213000, 124000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 13, 9, '더블 베드룸. 한 침대는 힘든 사람 ㄱㄱ', 87000, 45000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 16, 10, '초초초초초초촟촟ㅊ초호화 럭셔리 룸', 789000, 542000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 17, 11, '힐튼을 맛보고 싶어? 트윈 스위트 루우우웅움ㄱㄱ', 335000, 187000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 18, 12, '응 럭셔리 아니야 돌아가', 123000, 69000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 18, 12, '여관이 뭔지 맛볼 수 있는 트윈베드룸', 87000, 45000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 22, 14, '스위트룸 같은데 스위트룸 아님', 139000, 780000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 22, 15, '겉은 럭셔리한 트윈베드룸', 169000, 87000);
+
+insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+values(seq_room_tbl.nextval, 23, 16, 'vip만 모심', 489000, 279000);
+
+
+
+-- 예약 테이블 insert
+insert into booking_ck(r_idx, book_start, book_end)
+values(1, to_date('2019-08-08 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-10 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(2, to_date('2019-08-09 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-10 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(3, to_date('2019-08-12 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-15 13:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(4, to_date('2019-08-08 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-14 13:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(5, to_date('2019-08-07 11:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-09 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(6, to_date('2019-08-10 11:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-11 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(7, to_date('2019-08-06 12:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-08 10:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(9, to_date('2019-08-14 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-17 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(10, to_date('2019-08-14 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-15 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(11, to_date('2019-08-12 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-16 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(12, to_date('2019-08-14 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-18 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(13, to_date('2019-09-01 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-09-04 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(14, to_date('2019-08-17 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-19 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(15, to_date('2019-09-15 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-09-22 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
+
+insert into booking_ck(r_idx, book_start, book_end)
+values(16, to_date('2019-08-23 10:00:00','YYYY-MM-DD HH24:MI:SS'), to_date('2019-08-30 12:00:00','YYYY-MM-DD HH24:MI:SS'));
+
 
 
 
@@ -1051,14 +1352,5 @@ from acc_tbl
 -- 81
 
 
--- 2019.07.21 정혜윤 추가: 호텔 리스트 뽑는 쿼리문(검색어 포함)
-select acc_idx, acc_name, acc_img, acc_Rcnt, acc_text, region_name -- viewCount가 없어서 일단 방개수로 대신함.
-from acc_tbl A LEFT OUTER JOIN area_tbl R
-ON A.state = R.region_code
-where acc_addr1 like '%'|| '서울' || '%'
 
 
--- 코멘트 개수 뽑기
-select count(*)
-from comment_tbl
-where acc_idx = 54;
