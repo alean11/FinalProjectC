@@ -108,9 +108,11 @@
 				<div class="banner_content">
 					<div class="page_link">
 <%-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 각자 컨트롤러단에서 보여주려는 뷰단을 리턴할 때, 꼭 키값을 menuname 으로 해서, 해당 페이지의 메뉴 이름을 꼭 보낼 것! --%>
-						<a href="#">${menuname}</a>
+<%-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 첫 번째 href에 줄 주소의 키값은 menulink 로 해서 보낼 것!! --%>
+						<a href="${requestScope.menulink}">${requestScope.menuname}</a>
 <%-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 각자 컨트롤러단에서 보여주려는 뷰단을 리턴할 때, 꼭 키값을 pagename 으로 페이지 이름을 보낼 것! 그래야 헤더부분에 제목 뜸. --%>
-						<a href="#">${pagename}</a>
+<%-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 두 번째 href에 줄 주소의 키값은 pagelink 로 해서 보낼 것!! --%>
+						<a href="${requestScope.pagelink}">${requestScope.pagename}</a>
 					</div>
 					<h2>${pagename}</h2>
 				</div>

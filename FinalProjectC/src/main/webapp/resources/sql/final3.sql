@@ -4,7 +4,6 @@
 show user;
 
 
-
 --------일반회원테이블  : personal_mbr ------------------
 create table personal_mbr
     (idx number not null
@@ -1052,4 +1051,14 @@ from acc_tbl
 -- 81
 
 
+-- 2019.07.21 정혜윤 추가: 호텔 리스트 뽑는 쿼리문(검색어 포함)
+select acc_idx, acc_name, acc_img, acc_Rcnt, acc_text, region_name -- viewCount가 없어서 일단 방개수로 대신함.
+from acc_tbl A LEFT OUTER JOIN area_tbl R
+ON A.state = R.region_code
+where acc_addr1 like '%'|| '서울' || '%'
 
+
+-- 코멘트 개수 뽑기
+select count(*)
+from comment_tbl
+where acc_idx = 54;
