@@ -1351,6 +1351,10 @@ select count(*)
 from acc_tbl
 -- 81
 
+-- 2019.07.22 기업회원 1명 insert(김명진)
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'pikacu', '9695b88a59a1610320897fa84cb7e144cc51f2984520efb77111d94b402a8382', '000', '00', '00000', '피카츄', '지우', 'C/P74ewdLIh2ZJh1XD/vexaP+UsG9zKVXye7TBpMsQ8=', '000', '0000', '0000', default);
 
+commit;
 
 

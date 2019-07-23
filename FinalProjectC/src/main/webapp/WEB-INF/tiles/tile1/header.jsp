@@ -65,15 +65,17 @@
 								<a href="#" class="primary-btn dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
 								 aria-expanded="false">Sign In</a>
 								<ul class="dropdown-menu">
-									<li class="nav-item"><a class="nav-link" href="#">Personal</a></li>
-									<li class="nav-item"><a class="nav-link" href="#">Company</a></li>
+									<li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/privateLogin.we">Personal</a></li>
+									<li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/companyLogin.we">Company</a></li>
 								</ul>
 								</c:if>
 								<c:if test="${sessionScope.loginuser != null && sessionScope.companyuser == null}">
-								<a href="#" class="primary-btn">My Page</a>
+									<a href="<%= ctxPath%>/privateLogout.we" class="primary-btn" style="margin-right: 20px;">Logout</a>
+									<a href="#" class="primary-btn">${sessionScope.loginuser.p_name}</a>
 								</c:if>
 								<c:if test="${sessionScope.loginuser == null && sessionScope.companyuser != null}">
-								<a href="#" class="primary-btn">My Company</a>
+									<a href="<%= ctxPath%>/companyLogout.we" class="primary-btn" style="margin-right: 20px;">Logout</a>
+									<a href="#" class="primary-btn">${sessionScope.companyuser.cp_name}</a>
 								</c:if>
 							</li>
 							<li class="nav-item">
