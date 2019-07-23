@@ -14,10 +14,11 @@ public class CompanyVO {
 	private String cp_tel1;
 	private String cp_tel2;
 	private String cp_tel3;
+	private int status;
 	
 	public CompanyVO() {}
 	public CompanyVO(int idx, String cp_id, String cp_pwd, String cp_num1, String cp_num2, String cp_num3,
-			String cp_name, String ceoname, String cp_email, String cp_tel1, String cp_tel2, String cp_tel3) {
+			String cp_name, String ceoname, String cp_email, String cp_tel1, String cp_tel2, String cp_tel3, int status) {
 		this.idx = idx;
 		this.cp_id = cp_id;
 		this.cp_pwd = cp_pwd;
@@ -30,6 +31,7 @@ public class CompanyVO {
 		this.cp_tel1 = cp_tel1;
 		this.cp_tel2 = cp_tel2;
 		this.cp_tel3 = cp_tel3;
+		this.status = status;
 	}
 	public int getIdx() {
 		return idx;
@@ -102,6 +104,12 @@ public class CompanyVO {
 	}
 	public void setCp_tel3(String cp_tel3) {
 		this.cp_tel3 = cp_tel3;
+	}
+	public int getStatus() {
+		return status;
+	}
+	public void setStatus(int status) {
+		this.status = status;
 	}
 	
 }
