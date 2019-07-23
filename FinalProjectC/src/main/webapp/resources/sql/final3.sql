@@ -388,71 +388,85 @@ commit;
 -- 뷰로 만들 필요 없이, 자주 검색되는 것(where절 조건으로 자주 들어가는 것)을 각 테이블에서 인덱스로 만들고, 그 후에 테이블 조인을 해서 where절 조건에 그 인덱스들을 넣어주면 됨.
 -- 그럼 빨라짐. where절 조건에 맞는 애들부터 일단 읽어오기 때문인데, where절 조건이 index니까 빨라지는 것.
 
--- 컬럼 기준 카운트 개수 실험
-select COUNT(*) OVER (PARTITION BY cp_id)
-from acc_tbl;
+-- 합쳐야되는 테이블: acc_tbl, area_tbl, comment_tbl, room_tbl, room_type_tbl, booking_ck
+-- 인덱스로 만들 것들: select로 최종적으로 뽑아낸 것
 
 -- 쿼리문
-
-select acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
-     , commentCnt, ay_fee, k_fee, book_start, book_end
-from
-   (
-    select E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.commentCnt, E.acc_type
-         , F.ay_fee, F.k_fee, F.book_start, F.book_end
-    from
-    (
-      select C.acc_idx, C.acc_name, C.acc_img, C.acc_text, C.acc_type, C.acc_addr1, C.region_name, D.commentCnt
-      from
-        ( select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name
-          from acc_tbl A LEFT OUTER JOIN area_tbl B
-          ON A.state = B.region_code
-        ) C
-          LEFT OUTER JOIN
-         ( select COUNT(*) OVER (PARTITION BY acc_idx) AS commentCnt, acc_idx
-           from comment_tbl
-           where status = 1
-          ) D
-        ON C.acc_idx = D.acc_idx
-    ) E
-      LEFT OUTER JOIN
-      ( select ay_fee, k_fee, acc_idx, book_start, book_end
-        from room_tbl G LEFT OUTER JOIN booking_ck H
-        ON G.r_idx = H.r_idx
-       ) F
-    ON E.acc_idx = F.acc_idx
-   ) G
-where acc_addr1 like '%'|| '경기' || '%'
-      and (ay_fee*인원수)+(k_fee*인원수) between 검색한 값1 and 검색한 값2
-      and book_start between TO_DATE('2019-07-23','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-25', 'YYYY-MM-DD HH24:MI:SS')
-      and book_end between TO_DATE('2019-07-23','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-25', 'YYYY-MM-DD HH24:MI:SS');
-
-/************************************
-
-select r_idx, fk_acc_idx, r_text, ay_fee,  k_fee,  fk_rtype_idx,
-      (ay_fee * 4) + (k_fee * 4) AS TOTALPAY
-from room_tbl
-where (ay_fee * 4) + (k_fee * 4) between 725845 and 2495784
-
- and (ay_fee*인원수)+(k_fee*인원수) between 검색한 값1 and 검색한 값2
-
-
-*************************************/
-
-
-
-
--- 인덱스로 만들 것들
-/*acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
-, commentCnt, ay_fee, k_fee, book_start, book_end */
+    SELECT RNO, acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
+         , commentCnt, ay_fee, k_fee, book_start, book_end
+         , (ay_fee * 4) + (k_fee * 4) AS TOTALPAY
+    FROM
+       (
+        SELECT rownum AS RNO, E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.commentCnt, E.acc_type
+             , F.ay_fee, F.k_fee, F.book_start, F.book_end
+        FROM
+           (
+             SELECT C.acc_idx, C.acc_name, C.acc_img, C.acc_text, C.acc_type, C.acc_addr1, C.region_name, D.commentCnt
+             FROM
+                ( select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name
+                  from acc_tbl A LEFT OUTER JOIN area_tbl B
+                  ON A.state = B.region_code
+                ) C
+             LEFT OUTER JOIN
+                ( select commentCnt, acc_idx
+                       , rtype_idx, fk_acc_idx, rtype_name, rtype_cnt
+                  from
+                      (
+                      select COUNT(*) OVER (PARTITION BY acc_idx) AS commentCnt, acc_idx
+                      from comment_tbl
+                      where status = 1
+                      ) I
+                  RIGHT OUTER JOIN  room_type_tbl J
+                  ON I.acc_idx = J.FK_ACC_IDX
+                ) D
+             ON C.acc_idx = D.acc_idx
+           ) E
+        LEFT OUTER JOIN
+           ( select ay_fee, k_fee, fk_acc_idx, book_start, book_end
+             from room_tbl G LEFT OUTER JOIN booking_ck H
+             on G.r_idx = H.r_idx
+            ) F
+        ON E.acc_idx = F.fk_acc_idx
+       ) G
+    WHERE (acc_addr1 like '%'|| '경상북도' || '%' or acc_addr1  like '%'|| '경상남도' || '%')
+          and (ay_fee * 4) + (k_fee * 4) between 0 and 2495784
+          and book_start NOT between TO_DATE('2019-08-10','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-08-20', 'YYYY-MM-DD HH24:MI:SS')
+          and book_end NOT between TO_DATE('2019-08-10','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-08-20', 'YYYY-MM-DD HH24:MI:SS')
+    ORDER BY RNO asc
+          
+          
 
 
 
 /*
-업체: acc_idx
-방 종류: FK_acc_idx, PK_rtype_idx
-객실: FK_acc_idx, FK_rtype_idx, PK_r_idx
-*/
+
+
+-- 컬럼 기준 카운트 개수 실험
+select COUNT(*) OVER (PARTITION BY cp_id)
+from acc_tbl;
+
+-- 요금 계산할 때 쿼리문
+select r_idx, fk_acc_idx, r_text, ay_fee,  k_fee,  fk_rtype_idx,
+      (ay_fee * 4) + (k_fee * 4) AS TOTALPAY
+from room_tbl
+where (ay_fee * 4) + (k_fee * 4) between 725845 and 2495784
+   -- (ay_fee*인원수)+(k_fee*인원수) between 검색한 값1 and 검색한 값2
+
+
+-- 조인 실험
+select commentCnt, acc_idx
+     , rtype_idx, fk_acc_idx, rtype_name, rtype_cnt
+from
+    (
+    select COUNT(*) OVER (PARTITION BY acc_idx) AS commentCnt, acc_idx
+    from comment_tbl
+    where status = 1
+    ) A
+RIGHT OUTER JOIN  room_type_tbl B
+ON A.acc_idx = B.FK_ACC_IDX
+order by rtype_idx;
+
+
 select acc_name, acc_addr1, acc_idx
      , rtype_idx, rtype_name
      , r_idx, r_text, ay_fee, k_fee
@@ -468,6 +482,11 @@ from
     ) D
 ON C.rtype_idx = D.r_idx
 order by rtype_idx;
+
+*/
+
+
+
 
 
 
@@ -1351,6 +1370,10 @@ select count(*)
 from acc_tbl
 -- 81
 
+-- 2019.07.22 기업회원 1명 insert(김명진)
+insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+values(seq_company_mbr.nextval, 'pikacu', '9695b88a59a1610320897fa84cb7e144cc51f2984520efb77111d94b402a8382', '000', '00', '00000', '피카츄', '지우', 'C/P74ewdLIh2ZJh1XD/vexaP+UsG9zKVXye7TBpMsQ8=', '000', '0000', '0000', default);
 
+commit;
 
 
