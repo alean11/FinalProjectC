@@ -69,6 +69,7 @@ create table comment_tbl
 
 
 
+
 --------------------------------------------------------
 --------QNA 테이블 : qna_tbl
 create table qna_tbl
@@ -157,23 +158,23 @@ commit;
 --------------------------------------------------------
 ----업체 회원테이블  :  acc_tbl
 create table acc_tbl
-(acc_idx number
-,cp_id varchar2(20)     not null
-,state number(2)     not null
-,acc_name varchar2(60)  not null
-,acc_tel1 varchar2(3)   not null
-,acc_tel2 varchar2(4)   not null
-,acc_tel3 varchar2(4)   not null
-,acc_post1 varchar2(3)  not null
-,acc_post2 varchar2(3)  not null
-,acc_addr1 varchar2(90) not null
-,acc_addr2 varchar2(90) not null
-,acc_img varchar2(100)  not null
-,acc_text CLOB          not null
-,acc_Rcnt number(3)     not null
-,acc_status number(1)   DEFAULT 1
-,acc_type varchar2(10) not null    -- 호텔/리조트    
-,acc_grade number(1) not null      -- 1,2,3,4,5
+(acc_idx    number
+,cp_id      varchar2(20)        not null
+,state      number(2)           not null
+,acc_name   varchar2(60)        not null
+,acc_tel1   varchar2(3)         not null
+,acc_tel2   varchar2(4)         not null
+,acc_tel3   varchar2(4)         not null
+,acc_post1  varchar2(3)         not null
+,acc_post2  varchar2(3)         not null
+,acc_addr1  varchar2(90)        not null
+,acc_addr2  varchar2(90)        not null
+,acc_img    varchar2(100)       not null
+,acc_text   varchar2(4000)      not null    -- 2019.07.24. 정혜윤: 원래 CLOB였는데, 테이블 조인하면서 distinct가 안 먹어서 varchar2로 바꿈.
+,acc_Rcnt   number(3)           not null
+,acc_status number(1) DEFAULT 1
+,acc_type   varchar2(10)        not null    -- 호텔/리조트    
+,acc_grade  number(1)           not null      -- 1,2,3,4,5
 ,constraint PK_acc_tbl_acc_idx primary key(acc_idx)
 ,constraint FK_comment_tbl_cp_id FOREIGN key(cp_id) references company_mbr(cp_id)
 ,constraint FK_comment_tbl_state FOREIGN key(state) references area_tbl(region_code)
@@ -201,12 +202,12 @@ commit;
 ------------------------------------------------
 ---------객실테이블 : room_tbl
 create table room_tbl
-(r_idx number                            -- 방 고유번호. PK.
-,FK_acc_idx number           not null    -- 업체 테이블의 고유번호. 업체 테이블의 acc_idx를 참조하고 있음.
-,FK_rtype_idx varchar2(40)               -- 방 종류 고유번호. 방 종류 테이블의 rtype_idx를 참조하고 있음.
-,r_text CLOB                 not null
-,ay_fee number(8)            not null
-,k_fee number(8)             not null
+(r_idx          number                            -- 방 고유번호. PK.
+,FK_acc_idx     number           not null    -- 업체 테이블의 고유번호. 업체 테이블의 acc_idx를 참조하고 있음.
+,FK_rtype_idx   varchar2(40)               -- 방 종류 고유번호. 방 종류 테이블의 rtype_idx를 참조하고 있음.
+,r_text         varchar2(4000)   not null    -- 2019.07.24. 정혜윤: 원래 CLOB였는데, 테이블 조인하면서 distinct가 안 먹어서 varchar2로 바꿈.
+,ay_fee         number(8)        not null
+,k_fee          number(8)        not null
 ,constraint PK_room_tbl_r_idx primary key(r_idx)
 ,constraint FK_acc_tbl_acc_idx foreign key(acc_idx) references acc_tbl(acc_idx)
 );
@@ -384,37 +385,42 @@ commit;
 
 
 
+
 -- 2019.07.21 정혜윤 추가: 호텔 리스트 뽑는 쿼리문(검색어 포함)
 -- 뷰로 만들 필요 없이, 자주 검색되는 것(where절 조건으로 자주 들어가는 것)을 각 테이블에서 인덱스로 만들고, 그 후에 테이블 조인을 해서 where절 조건에 그 인덱스들을 넣어주면 됨.
 -- 그럼 빨라짐. where절 조건에 맞는 애들부터 일단 읽어오기 때문인데, where절 조건이 index니까 빨라지는 것.
 
--- 합쳐야되는 테이블: acc_tbl, area_tbl, comment_tbl, room_tbl, room_type_tbl, booking_ck
--- 인덱스로 만들 것들: select로 최종적으로 뽑아낸 것
+-- 인덱스로 만들 것들
+--     : acc_idx, acc_name, acc_img, acc_text, region_name, acc_type, cnt(해당 호텔을 본 횟수임.) -> 검색 리스트에 띄워줘야 될 애들
+--     : ay_fee, k_fee, book_start, book_end  -> 검색할 때 쓰이는 애들
+-- 근데 상세 페이지에는 room_type 같은 것도 들어감. 이것도 인덱스로 만들어줘야 하나? 안 만들면 6개 테이블 합친 걸 한 페이지 띄울 때 마다 읽어들일텐데..어떤게 더 효율적인지?(질문하기)
 
 -- 쿼리문
-    SELECT RNO, acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type
-         , commentCnt, ay_fee, k_fee, book_start, book_end
-         , (ay_fee * 4) + (k_fee * 4) AS TOTALPAY
+--     : acc_tbl, area_tbl, acc_tag, room_tbl, room_type_tbl, booking_ck 합친 것
+--     : 사용할 때는 맨 위 select 문에 필요한 컬럼 뽑아서 쓸 것
+    SELECT distinct acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type, cnt
+      , ay_fee, k_fee, book_start, book_end 
+         , (ay_fee * 4) + (k_fee * 4) AS TOTALPAY -- 앨리어스는 인덱스로 만들 수 없는데, 인덱스로 만들어진 애들을 데리고 계산하니까, 안 느려지겠지..? (질문하기)
     FROM
        (
-        SELECT rownum AS RNO, E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.commentCnt, E.acc_type
+        SELECT E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.cnt, E.acc_type
              , F.ay_fee, F.k_fee, F.book_start, F.book_end
         FROM
            (
-             SELECT C.acc_idx, C.acc_name, C.acc_img, C.acc_text, C.acc_type, C.acc_addr1, C.region_name, D.commentCnt
+             SELECT C.acc_idx, C.acc_name, C.acc_img, C.acc_text, C.acc_type, C.acc_addr1, C.region_name
+                  , cnt
              FROM
                 ( select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name
                   from acc_tbl A LEFT OUTER JOIN area_tbl B
                   ON A.state = B.region_code
                 ) C
              LEFT OUTER JOIN
-                ( select commentCnt, acc_idx
+                ( select acc_idx, acc_name, cnt
                        , rtype_idx, fk_acc_idx, rtype_name, rtype_cnt
                   from
                       (
-                      select COUNT(*) OVER (PARTITION BY acc_idx) AS commentCnt, acc_idx
-                      from comment_tbl
-                      where status = 1
+                      select acc_idx, acc_name, cnt
+                      from acc_tag
                       ) I
                   RIGHT OUTER JOIN  room_type_tbl J
                   ON I.acc_idx = J.FK_ACC_IDX
@@ -428,14 +434,11 @@ commit;
             ) F
         ON E.acc_idx = F.fk_acc_idx
        ) G
-    WHERE (acc_addr1 like '%'|| '경상북도' || '%' or acc_addr1  like '%'|| '경상남도' || '%')
-          and (ay_fee * 4) + (k_fee * 4) between 0 and 2495784
-          and book_start NOT between TO_DATE('2019-08-10','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-08-20', 'YYYY-MM-DD HH24:MI:SS')
-          and book_end NOT between TO_DATE('2019-08-10','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-08-20', 'YYYY-MM-DD HH24:MI:SS')
-    ORDER BY RNO asc
-          
-          
-
+  /*  WHERE (acc_addr1 like '%'|| '경상북도' || '%' or acc_addr1  like '%'|| '경상남도' || '%') 
+          and (ay_fee * 1) + (k_fee * 0) between 0 and 99999999
+          and book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
+          and book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS') */
+    ORDER BY RNO asc;
 
 
 /*
@@ -482,13 +485,238 @@ from
     ) D
 ON C.rtype_idx = D.r_idx
 order by rtype_idx;
-
 */
 
 
 
+    
+ -----------   서영학 -----------------------------------------------------------------------------------------------------
+ -- 원본
+ SELECT acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, acc_type, cnt
+      , ay_fee, k_fee, book_start, book_end 
+         , (ay_fee * 4) + (k_fee * 4) AS TOTALPAY -- 앨리어스는 인덱스로 만들 수 없는데, 인덱스로 만들어진 애들을 데리고 계산하니까, 안 느려지겠지..? (질문하기)
+    FROM
+       (
+        SELECT E.acc_idx, E.acc_addr1, E.acc_img, E.acc_type, E.acc_text, E.region_name, E.region_shortname, E.cnt
+             , F.ay_fee, F.k_fee, F.book_start, F.book_end
+        FROM
+           (
+             -----------------------------------------------------
+             -- 원본에 1차 정리를 갖다 붙임
+             select A.acc_idx,A.acc_name,A.acc_addr1, A.acc_img, A.acc_type, A.acc_text
+                  , B.region_name, B.region_shortname
+                  , nvl(C.cnt, 0) AS cnt
+             from acc_tbl A LEFT JOIN area_tbl B
+             ON A.state = B.region_code
+             LEFT JOIN acc_tag C
+             ON A.acc_idx = C.acc_idx      
+             ----------------------------------
+           ) E
+           
+        LEFT OUTER JOIN
+           ( select ay_fee, k_fee, fk_acc_idx, book_start, book_end
+             from room_tbl G LEFT OUTER JOIN booking_ck H
+             on G.r_idx = H.r_idx
+            ) F
+        ON E.acc_idx = F.fk_acc_idx
+       ) G;
+-- end of 원본 ----------------------------------------------------------------------------------------------
+ 
+ 
+-- ********************************************************************************************************** -- 
+-- 2차 정리
+SELECT E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.cnt, E.acc_type
+     , F.ay_fee, F.k_fee, F.book_start, F.book_end
+FROM
+   (
+     -----------------------------------------------------
+     -- 1차 정리
+     select A.acc_idx, A.acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name, nvl(cnt, 0) AS cnt
+     from acc_tbl A LEFT JOIN area_tbl B
+     ON A.state = B.region_code
+     LEFT JOIN acc_tag C
+     ON A.acc_idx = C.acc_idx            
+     -- end of 1차 정리 -----------------------------------
+   ) E
+LEFT OUTER JOIN
+   ( select ay_fee, k_fee, fk_acc_idx, book_start, book_end
+     from room_tbl G LEFT OUTER JOIN booking_ck H
+     on G.r_idx = H.r_idx
+    ) F
+ON E.acc_idx = F.fk_acc_idx;
+-- end of 2차 정리
+-- ********************************************************************************************************** -- 
 
 
+-- 3차 정리 & 인라인뷰로 만들기
+create or replace view view_abcd
+as
+SELECT E.acc_idx, E.acc_name, E.acc_img, E.acc_text, E.region_name, E.acc_addr1, E.cnt, E.acc_type
+     , F.ay_fee, F.k_fee, F.book_start, F.book_end
+FROM
+   (
+     select A.acc_idx, A.acc_name, acc_img, acc_text, acc_addr1, acc_type, region_name, nvl(cnt, 0) AS cnt
+     from acc_tbl A LEFT JOIN area_tbl B
+     ON A.state = B.region_code
+     LEFT JOIN acc_tag C
+     ON A.acc_idx = C.acc_idx            
+   ) E
+LEFT OUTER JOIN
+   ( select ay_fee, k_fee, fk_acc_idx, book_start, book_end
+     from room_tbl G LEFT OUTER JOIN booking_ck H
+     on G.r_idx = H.r_idx
+    ) F
+ON E.acc_idx = F.fk_acc_idx;
+
+select *
+from view_abcd;
+
+-- end of 3차 정리
+-- ********************************************************************************************************** -- 
+
+
+
+-- 4차 정리
+--  : distinct 먹게 하려고, 조인해서 쓴 테이블 중 clob 타입인 것들을 varchar2(4000)으로 바꿈.
+
+desc room_tbl;  
+
+alter table room_tbl
+modify(R_TEXT varchar2(4000));
+
+select *
+from room_tbl;
+
+create table imsi_room_tbl
+as
+select *
+from room_tbl;
+
+select *
+from imsi_room_tbl;
+
+alter table room_tbl
+drop column r_text;
+
+alter table room_tbl
+add r_text varchar2(4000);
+
+update room_tbl A set r_text = (select r_text from imsi_room_tbl where r_idx = A.r_idx);  
+
+commit;
+
+desc acc_tbl;
+
+create table imsi_acc_tbl
+as
+select *
+from acc_tbl;
+
+alter table acc_tbl
+drop column acc_text;
+
+alter table acc_tbl
+add acc_text varchar2(4000);
+
+update acc_tbl A set acc_text = (select acc_text from imsi_acc_tbl where acc_idx = A.acc_idx);  
+
+commit;
+
+select *
+from acc_tbl;
+
+-- end of 4차 정리
+-- ********************************************************************************************************** -- 
+
+
+
+
+-- 5차 정리
+-- 결과: distinct 이용해서 중복된 행 없애면서 select 하기
+select distinct ACC_IDX, ACC_NAME, ACC_IMG, ACC_TEXT, REGION_NAME, ACC_ADDR1, CNT
+from view_abcd
+--WHERE (acc_addr1 like '%'|| '경상북도' || '%' or acc_addr1  like '%'|| '경상남도' || '%') 
+--          and (ay_fee * 1) + (k_fee * 0) between 0 and 99999999
+--          and book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
+--          and book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
+order by  ACC_IDX;
+          
+-- end of 5차 정리
+-- ********************************************************************************************************** --
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+-------------- 2019.07.24. 정혜윤
+-- : 댓글 테이블에 댓글 몇 개 추가
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(16, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(16, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(17, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(17, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(17, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(18, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(18, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(18, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(18, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(18, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(22, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(22, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(22, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(22, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(7, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(8, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(8, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(9, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(9, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(10, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+values(13, 'admin', '우오오아ㅗ아와앙ㅇ', default, default);
+
+-- :태그 테이블에 몇 개 인서트
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(16, '켄싱턴 리조트 경주', 5);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(17, '힐튼경주', 39);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(18, '베니키아 스위스로젠 호텔', 12);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(22, '경주 코오롱 호텔', 3);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(23, '마우나 오션 리조트', 55);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(7, '스탠포드 호텔 리조트 통영', 89);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(8, '아난티 남해', 41);
+insert into acc_tag(acc_idx, acc_name, cnt)
+values(9, '아이스퀘어호텔', 11);
 
 
 
