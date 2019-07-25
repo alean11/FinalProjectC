@@ -93,6 +93,7 @@ public class MyUtil {
 		   						   
 		*/
 
+		
 		// *** [이전] 만들기 *** //
 		if(pageNo != 1) {
 			pageBar += "&nbsp;<a href='"+url+"&currentShowPageNo="+(pageNo-1)+"&sizePerPage="+sizePerPage+"&searchType="+searchType+"&searchWord="+searchWord+"'>[이전]</a>&nbsp;";

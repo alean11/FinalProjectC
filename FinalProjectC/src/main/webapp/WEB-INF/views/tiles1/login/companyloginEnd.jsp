@@ -4,6 +4,7 @@
 <% String ctxPath = request.getContextPath(); %>
 
 <script type="text/javascript">
+
 	var companyuser = "${sessionScope.companyuser}";
 	var gobackURL = "${requestScope.gobackURL}";
 	

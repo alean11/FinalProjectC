@@ -12,7 +12,6 @@
 
 <link rel="stylesheet" href="<%= ctxPath%>/resources/css/style_privatelogin.css" type="text/css" />
 
-
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
 <script type="text/javascript">

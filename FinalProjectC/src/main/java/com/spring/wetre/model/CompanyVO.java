@@ -16,6 +16,7 @@ public class CompanyVO {
 	private String cp_tel3;
 	private int status;
 	
+	
 	public CompanyVO() {}
 	public CompanyVO(int idx, String cp_id, String cp_pwd, String cp_num1, String cp_num2, String cp_num3,
 			String cp_name, String ceoname, String cp_email, String cp_tel1, String cp_tel2, String cp_tel3, int status) {
