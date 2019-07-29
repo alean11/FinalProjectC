@@ -4,6 +4,7 @@
 show user;
 
 
+
 --------일반회원테이블  : personal_mbr ------------------
 create table personal_mbr
     (idx number not null
@@ -392,11 +393,12 @@ commit;
 -- 최종적으로 만든 인라인뷰(상세페이지, 상세검색 등에 사용 가능.)
 -- 합친 테이블: acc_tbl, area_tbl, acc_tag, room_tbl, room_type_tbl, booking_ck
 
+
 -- !!!!!!! 사용할 때는 맨 위 select 문에 필요한 컬럼 써서 사용할 것 !!!!!!!
 select distinct ACC_IDX, ACC_NAME, ACC_IMG, ACC_TEXT, REGION_NAME, ACC_ADDR1, CNT
 --     , (ay_fee * 1) + (k_fee * 0) AS TOTALPAY
 from view_hotel_list_search
-WHERE (acc_addr1 like '%'|| '경상북도' || '%' or acc_addr1  like '%'|| '경상남도' || '%') 
+WHERE (acc_addr1 like '%'|| '경상북도' || '%'or acc_addr1  like '%'|| '경상남도' || '%') 
   and (ay_fee * 1) + (k_fee * 0) between 0 and 249000
   and book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
   and book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
@@ -441,27 +443,60 @@ FROM
 
 
 
-
+-- 2019.07.25. 정혜윤 추가
 -- 상세검색 리스트 페이지 호텔 뽑는 쿼리문: 검색어 및 페이징 처리
-select distinct acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, cnt, acc_type
+-- 현재 방 가격 같은 값이 다 들어간 상태가 아니라서, 값 없어서 뜨지 않는 호텔들이 있음.
+select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type, region_name
 from
     (
-      select rownum AS RNO, acc_idx, acc_name, acc_img, acc_text, region_name, acc_addr1, cnt, acc_type
-      --     , book_start, book_end, ay_fee, k_fee ->확인용
-      from view_hotel_list_search
-      where (acc_addr1 like '%'|| '경상북도' || '%') 
-        and (ay_fee * 1) + (k_fee * 0) between 0 and 200000
-        and book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
-        and book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')
-      order by RNO asc
+     select rownum AS RNO, acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+          , region_name, region_shortname
+     from
+         ( 
+          select distinct acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+               , region_name, region_shortname
+          from
+              (
+               select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+                    , region_name, region_shortname, acc_grade
+               from view_hotel_list_search
+               where 1 = 1
+               and ((ay_fee * 1) + (k_fee * 1) between 0 and 99999999) -- 가격옵션. null 가능성 있음.
+               and (acc_addr1 like '%'|| '경상' || '%' or acc_addr2 like '%'|| '경상' || '%' or
+                    acc_addr1 like '%'|| '백령도' || '%' or acc_addr2 like '%'|| '백령도' || '%') -- 지역날씨에서 얻은 지역. null 가능성 있음.
+               and (book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')) -- null 가능성 있음.
+               and (book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')) -- null 가능성 있음.
+               and (acc_grade = 4)
+               and (acc_type like '%'|| '리조트' || '%')
+              ) V
+          where acc_addr1 like '%'|| '아난티' || '%' or acc_name like '%'|| '아난티' || '%' or region_shortname like '%' || '아난티' || '%' -- 검색어에서 얻은 지역. null 가능성 있음.
+         ) T
+    ) F
+where RNO between 1 and 10
+
+
+select * from view_hotel_list_search
+
+
+
+-- 호텔 등급별 개수 뽑는 쿼리문: 검색조건 포함임.
+select acc_type, count(*)
+from
+    (
+     select acc_name, acc_addr1, acc_addr2, acc_type, acc_grade
+          , region_name, region_shortname
+     from view_hotel_list_search
+     where 1 = 1
+       and ((ay_fee * 1) + (k_fee * 1) between 0 and 99999999) -- 가격옵션. null 가능성 있음.
+       and (acc_addr1 like '%'|| '경상' || '%' or acc_addr2 like '%'|| '경상' || '%' or
+            acc_addr1 like '%'|| '백령도' || '%' or acc_addr2 like '%'|| '백령도' || '%') -- 지역날씨에서 얻은 지역. null 가능성 있음.
+       and (book_start NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')) -- null 가능성 있음.
+       and (book_end NOT between TO_DATE('2019-07-01','YYYY-MM-DD HH24:MI:SS') and TO_DATE('2019-07-02', 'YYYY-MM-DD HH24:MI:SS')) -- null 가능성 있음.
+       and (acc_grade = 4)
+       and (acc_type like '%'|| '리조트' || '%')
     ) V
-where RNO between 1 and 10;
-
-
-
-
-
-
+--where acc_addr1 like '%'|| '서울' || '%' or acc_name like '%'|| '서울' || '%' or region_shortname like '%' || '서울' || '%' -- 검색어에서 얻은 지역. null 가능성 있음.
+group by acc_type;
 
 
 

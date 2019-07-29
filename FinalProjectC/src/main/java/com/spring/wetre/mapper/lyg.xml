@@ -6,8 +6,37 @@
 <!-- ==== #29. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
 <mapper namespace="lyg">
 	<!-- 태그테이블 인서트 -->
-	<update id="cnt" parameterType="String">
+	<update id="hoteltag" parameterType="String">
 		update acc_cnt set cnt = cnt + 1
-		where acc_idx = #{idx}
+		where acc_idx = #{acc_idx}
 	</update>
+	<select id="roomedetail" resultType="com.spring.wetre.lyg.controller.RoomVO">
+		select r_idx, acc_idx, r_kind, r_text, r_cnt, ay_fee, k_fee
+		from room_tbl
+		where r_idx = #{r_idx}
+		
+	</select>
+	
+	<!-- 아이디 존재유무 -->
+	<select id="isUserExists" parameterType="HashMap" resultType="int">
+		select count(*)
+		from personal_mbr
+		where p_status=1 and p_userid = #{userid} and p_email = #{email}
+	</select>
+	
+	<select id="getStoreMap" resultType="com.spring.wetre.model.AccVO">
+		select acc_idx, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_addr1
+		from acc_tbl
+	</select>
+	<select id="checkEmail" parameterType="String" resultType="int">
+		select count(*)
+		from personal_mbr
+		where p_email = #{email}
+	</select>
+	
+	<select id="acc">
+		select acc_addr1
+		from acc_tbl
+		where acc_idx = #{acc_idx}
+	</select>
 </mapper>

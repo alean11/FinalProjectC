@@ -6,16 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.spring.common.AES256;
-import com.spring.wetre.chy.model.InterChyDAO;
+import com.spring.wetre.chy.model.InterAccommodationDAO;
 import com.spring.wetre.model.AccVO;
 
 /// 서비스 선언 ///
 @Service
-public class ChyService implements InterChyService {
+public class AccommodationService implements InterAccommodationService {
 
 	/// DAO 의존객체 주입  ///
 	@Autowired
-	private InterChyDAO dao;
+	private InterAccommodationDAO dao;
 
 	/// 암호화/복호화 의존객체 주입 ///
 	@Autowired
@@ -32,22 +32,28 @@ public class ChyService implements InterChyService {
 		return regionList;
 	}
 
-
-	// #y3. 호텔 목록 뽑기: 검색어 포함
+	// #y2. 호텔 목록 뽑기: 검색어 포함
 	@Override
 	public List<AccVO> getAccList(HashMap<String, Object> optMap) {
 		List<AccVO> accList = dao.getAccList(optMap);
 		return accList;
 	}
 
-	
-	// #y3. 호텔 목록 뽑기: 검색어 미포함(전부 뽑기)
+	// #y2. 호텔 등급별 개수 뽑기
 	@Override
-	public List<AccVO> getAccAllList() {
-		List<AccVO> accAllList = dao.getAccAllList();
-		return accAllList;
+	public List<HashMap<String, Object>> getAccGradeCnt(HashMap<String, Object> optMap) {
+		List<HashMap<String, Object>> accGradeCnt = dao.getAccGradeCnt(optMap);
+		return accGradeCnt;
 	}
-	
+
+	// #y2. 호텔 타입별 개수 뽑기
+	@Override
+	public List<HashMap<String, Object>> getAccTypeCnt(HashMap<String, Object> optMap) {
+		List<HashMap<String, Object>> accTypeCnt = dao.getAccTypeCnt(optMap);
+		return accTypeCnt;
+	}
+
+
 	
 	
 }

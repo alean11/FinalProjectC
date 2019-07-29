@@ -105,7 +105,7 @@ public class DetailPageController {
 		
 		mv.addObject("accList", accList);
 		mv.addObject("jsonStr", jsonStr);
-		// mv.setViewName("map/googlemap.tiles1");
+		mv.setViewName("map/googlemap.tiles1");
 		
 		return mv;
 	}

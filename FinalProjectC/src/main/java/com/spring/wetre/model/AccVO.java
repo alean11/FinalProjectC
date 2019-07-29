@@ -14,15 +14,25 @@ public class AccVO {
 	private String acc_addr1;
 	private String acc_addr2;
 	private String acc_img;
-	private String acc_text;
 	private int acc_Rcnt;
 	private int acc_status;
+	private String acc_type;
+	private int acc_grade;
+	private String acc_text;
+	
+	
+	// 인라인뷰로 합치면서, 새로운 컬럼들 넣어줘야 해서 넣어줌.
+	private String region_name;
+	private int cnt;
 	
 	public AccVO() {}
-	
+
+
 	public AccVO(int acc_idx, String cp_id, int state, String acc_name, String acc_tel1, String acc_tel2,
 			String acc_tel3, String acc_post1, String acc_post2, String acc_addr1, String acc_addr2, String acc_img,
-			String acc_text, int acc_Rcnt, int acc_status) {
+			int acc_Rcnt, int acc_status, String acc_type, int acc_grade, String acc_text, String region_name,
+			int cnt) {
+		super();
 		this.acc_idx = acc_idx;
 		this.cp_id = cp_id;
 		this.state = state;
@@ -35,10 +45,16 @@ public class AccVO {
 		this.acc_addr1 = acc_addr1;
 		this.acc_addr2 = acc_addr2;
 		this.acc_img = acc_img;
-		this.acc_text = acc_text;
 		this.acc_Rcnt = acc_Rcnt;
 		this.acc_status = acc_status;
+		this.acc_type = acc_type;
+		this.acc_grade = acc_grade;
+		this.acc_text = acc_text;
+		this.region_name = region_name;
+		this.cnt = cnt;
 	}
+
+
 
 	public int getAcc_idx() {
 		return acc_idx;
@@ -143,6 +159,14 @@ public class AccVO {
 	public void setAcc_text(String acc_text) {
 		this.acc_text = acc_text;
 	}
+	
+	public String getRegion_name() {
+		return region_name;
+	}
+
+	public void setRegion_name(String region_name) {
+		this.region_name = region_name;
+	}
 
 	public int getAcc_Rcnt() {
 		return acc_Rcnt;
@@ -158,6 +182,34 @@ public class AccVO {
 
 	public void setAcc_status(int acc_status) {
 		this.acc_status = acc_status;
+	}
+
+	public int getCnt() {
+		return cnt;
+	}
+
+	public void setCnt(int cnt) {
+		this.cnt = cnt;
+	}
+
+
+	public String getAcc_type() {
+		return acc_type;
+	}
+
+
+	public void setAcc_type(String acc_type) {
+		this.acc_type = acc_type;
+	}
+
+
+	public int getAcc_grade() {
+		return acc_grade;
+	}
+
+
+	public void setAcc_grade(int acc_grade) {
+		this.acc_grade = acc_grade;
 	}
 	
 	

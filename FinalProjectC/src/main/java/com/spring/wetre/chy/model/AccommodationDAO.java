@@ -11,7 +11,7 @@ import com.spring.wetre.model.AccVO;
 
 /// DAO 선언 ///
 @Repository
-public class ChyDAO implements InterChyDAO {
+public class AccommodationDAO implements InterAccommodationDAO {
 
 	/// myBatis(JDBC) sqlSessionTemplate 의존 객체 주입 ///
 	@Autowired
@@ -29,23 +29,31 @@ public class ChyDAO implements InterChyDAO {
 	}
 	
 	
-	// #y3. 호텔 목록 뽑기: 검색어 포함
+	// #y2. 호텔 목록 뽑기: 검색어 포함
 	@Override
 	public List<AccVO> getAccList(HashMap<String, Object> optMap) {
 		List<AccVO> accList = sqlsession.selectList("chy.getAccList", optMap);
+		for(AccVO accvo : accList) {
+			System.out.println("호텔이름(dao임): "+accvo.getAcc_name());
+		}
 		return accList;
 	}
 
-	
-	// #y3. 호텔 목록 뽑기: 검색어 미포함(전부 뽑기)
+
+	// #y2. 호텔 등급별 개수 뽑기
 	@Override
-	public List<AccVO> getAccAllList() {
-		List<AccVO> accAllList = sqlsession.selectList("chy.getAccAllList");
-		return accAllList;
+	public List<HashMap<String, Object>> getAccGradeCnt(HashMap<String, Object> optMap) {
+		List<HashMap<String, Object>> accGradeCnt = sqlsession.selectList("chy.getAccGradeCnt", optMap);
+		return accGradeCnt;
 	}
 
-	
-	
+
+	// #y2. 호텔 타입별 개수 뽑기
+	@Override
+	public List<HashMap<String, Object>> getAccTypeCnt(HashMap<String, Object> optMap) {
+		List<HashMap<String, Object>> accTypeCnt = sqlsession.selectList("chy.getAccTypeCnt", optMap);
+		return accTypeCnt;
+	}
 	
 	
 	

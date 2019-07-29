@@ -194,6 +194,8 @@
             	var result = label_result + " " + numberWithCommas(ui.values[0]) + ' - ' + numberWithCommas(ui.values[1]) + unit;
             	/* console.log(t); */
                 t.closest('.slider-range').find('.range-price').html(result);
+                t.closest('.slider-range').find('.accListPrice1').val(ui.values[0]);
+                t.closest('.slider-range').find('.accListPrice2').val(ui.values[1]);
             }
         });
     })

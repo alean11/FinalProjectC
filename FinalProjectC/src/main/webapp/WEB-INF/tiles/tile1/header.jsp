@@ -37,7 +37,7 @@
 								<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
 								 aria-expanded="false">Accommodation</a>
 								<ul class="dropdown-menu">
-									<li class="nav-item"><a class="nav-link" href="#">상세검색?</a></li>
+									<li class="nav-item"><a class="nav-link" href="<%= ctxPath%>/accommodation/accList.we">상세검색?</a></li>
 									<li class="nav-item"><a class="nav-link" href="#">날씨 추천 숙박?</a></li>
 								</ul>
 							</li>
@@ -116,7 +116,7 @@
 <%-- ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 두 번째 href에 줄 주소의 키값은 pagelink 로 해서 보낼 것!! --%>
 						<a href="${requestScope.pagelink}">${requestScope.pagename}</a>
 					</div>
-					<h2>${pagename}</h2>
+					<h2>${requestScope.pagename}</h2>
 				</div>
 			</div>
 		</div>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ==== #00. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ==== #00. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 함.) ==== -->
+<mapper namespace="chy">
+
+
+	<!-- #y2. 리스트 뷰단에 뿌려줄 지역명 및 코드를 불러옴. -->
+	<resultMap type="HashMap" id="regionMap">
+		<result property="reCode"		column="region_code"		javaType="String"/>
+		<result property="reName"		column="region_name" 		javaType="String"/>
+		<result property="reShotName"	column="region_shortName"	javaType="String"/>
+	</resultMap>
+	<select id="getRegionList" resultMap="regionMap">
+		select region_code, region_name, region_shortName
+		from area_tbl
+		order by region_code asc
+	</select>
+
+
+
+	<!-- #y2. 호텔 목록 뽑기: 검색어 포함, 옵션 포함, 페이징 처리 -->
+	<!-- 주의!!! foreach의 경우에는 값 넣을 때 문자열이면 홑따옴표 붙여줘야 됨!!! -->
+ 	<select id="getAccList" parameterType="HashMap" resultType="com.spring.wetre.model.AccVO">
+		select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type, region_name
+		from
+		    (
+		     select rownum AS RNO, acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+		          , region_name, region_shortname
+		     from
+		         ( 
+		          select distinct acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+		               , region_name, region_shortname
+		          from
+		              (
+		               select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
+		                    , region_name, region_shortname, acc_grade
+		               from view_hotel_list_search
+		               <where> 1 = 1
+							<if test='(adultNum != null and !"".equals(adultNum)) or (kidsNum != null and !"".equals(kidsNum))'>
+								and ((ay_fee * #{adultNum}) + (k_fee * #{kidsNum}) between #{accListPrice1} and #{accListPrice2})
+							</if>
+							<if test='regionArr != null and !"".equals(regionArr)'>
+								and
+								<foreach collection="regionArr" index="i" open="(" separator="or" close=")">
+									acc_addr1 like '%' || '${regionArr[i]}' || '%' or acc_addr2 like '%' || '${regionArr[i]}' || '%'
+								</foreach>
+							</if>
+							<if test='book_start != null and !"".equals(book_start)'>
+								and (book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))				
+							</if>
+							<if test='book_end != null and !"".equals(book_end)'>
+								and (book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+							</if>
+							<if test='acc_gradeArr != null and !"".equals(acc_gradeArr)'>
+								and
+								<foreach collection="acc_gradeArr" index="j" open="(" separator="or" close=")">
+									acc_grade = ${acc_gradeArr[j]}
+								</foreach>
+							</if>
+							<if test='acc_typeArr != null and !"".equals(acc_typeArr)'>
+								and
+								<foreach collection="acc_typeArr" index="k" open="(" separator="or" close=")">
+									acc_type like '%'|| '${acc_typeArr[k]}' || '%'
+								</foreach>
+							</if>
+		               </where>
+                       ) V
+                 <if test='blendSearchWord != null and !"".equals(blendSearchWord)'>
+					where acc_addr1 like '%'|| #{blendSearchWord} || '%' or acc_name like '%'|| #{blendSearchWord} || '%' or region_shortname like '%' || #{blendSearchWord} || '%'
+		         </if>
+		         ) T
+		    ) F
+		where RNO between #{startRno} and #{endRno}
+	</select>
+	
+	
+	
+	<!-- #y2. 호텔 등급별 개수 뽑기 -->
+	<resultMap type="HashMap" id="accGradeCnt">
+		<result property="acc_grade"	column="acc_grade"	javaType="int"/>
+		<result property="CNT"			column="CNT" 		javaType="String"/>
+	</resultMap>
+	<select id="getAccGradeCnt" parameterType="HashMap" resultMap="accGradeCnt">
+		select acc_grade, count(*) AS CNT
+		from
+		    (
+		     select acc_name, acc_addr1, acc_addr2, acc_type, acc_grade
+		          , region_name, region_shortname
+		     from view_hotel_list_search
+		     <where> 1 = 1
+				<if test='(adultNum != null and !"".equals(adultNum)) or (kidsNum != null and !"".equals(kidsNum))'>
+					and ((ay_fee * #{adultNum}) + (k_fee * #{kidsNum}) between #{accListPrice1} and #{accListPrice2})
+				</if>
+				<if test='regionArr != null and !"".equals(regionArr)'>
+					and
+					<foreach collection="regionArr" index="i" open="(" separator="or" close=")">
+						acc_addr1 like '%' || '${regionArr[i]}' || '%' or acc_addr2 like '%' || '${regionArr[i]}' || '%'
+					</foreach>
+				</if>
+				<if test='book_start != null and !"".equals(book_start)'>
+					and (book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))				
+				</if>
+				<if test='book_end != null and !"".equals(book_end)'>
+					and (book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+				</if>
+				<if test='acc_gradeArr != null and !"".equals(acc_gradeArr)'>
+					and
+					<foreach collection="acc_gradeArr" index="j" open="(" separator="or" close=")">
+						acc_grade = ${acc_gradeArr[j]}
+					</foreach>
+				</if>
+				<if test='acc_typeArr != null and !"".equals(acc_typeArr)'>
+					and
+					<foreach collection="acc_typeArr" index="k" open="(" separator="or" close=")">
+						acc_type like '%'|| '${acc_typeArr[k]}' || '%'
+					</foreach>
+				</if>
+		     </where>
+		     ) V
+		     <if test='blendSearchWord != null and !"".equals(blendSearchWord)'>
+		     where acc_addr1 like '%'|| #{blendSearchWord} || '%' or acc_name like '%'|| #{blendSearchWord} || '%' or region_shortname like '%' || #{blendSearchWord} || '%'
+		     </if>
+		group by acc_grade
+	</select>
+
+
+
+	<!-- #y2. 호텔 타입별 개수 뽑기 -->
+	<resultMap type="HashMap" id="accTypeCnt">
+		<result property="acc_type"	column="acc_type"	javaType="String"/>
+		<result property="CNT"		column="CNT"		javaType="String"/>
+	</resultMap>
+	<select id="getAccTypeCnt" parameterType="HashMap" resultMap="accTypeCnt">
+		select acc_type, count(*) AS CNT
+		from
+		    (
+		     select acc_name, acc_addr1, acc_addr2, acc_type, acc_grade
+		          , region_name, region_shortname
+		     from view_hotel_list_search
+		     <where> 1 = 1
+				<if test='(adultNum != null and !"".equals(adultNum)) or (kidsNum != null and !"".equals(kidsNum))'>
+					and ((ay_fee * #{adultNum}) + (k_fee * #{kidsNum}) between #{accListPrice1} and #{accListPrice2})
+				</if>
+				<if test='regionArr != null and !"".equals(regionArr)'>
+					and
+					<foreach collection="regionArr" index="i" open="(" separator="or" close=")">
+						acc_addr1 like '%' || '${regionArr[i]}' || '%' or acc_addr2 like '%' || '${regionArr[i]}' || '%'
+					</foreach>
+				</if>
+				<if test='book_start != null and !"".equals(book_start)'>
+					and (book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))				
+				</if>
+				<if test='book_end != null and !"".equals(book_end)'>
+					and (book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+				</if>
+				<if test='acc_gradeArr != null and !"".equals(acc_gradeArr)'>
+					and
+					<foreach collection="acc_gradeArr" index="j" open="(" separator="or" close=")">
+						acc_grade = ${acc_gradeArr[j]}
+					</foreach>
+				</if>
+				<if test='acc_typeArr != null and !"".equals(acc_typeArr)'>
+					and
+					<foreach collection="acc_typeArr" index="k" open="(" separator="or" close=")">
+						acc_type like '%'|| '${acc_typeArr[k]}' || '%'
+					</foreach>
+				</if>
+		     </where>
+		     ) V
+		     <if test='blendSearchWord != null and !"".equals(blendSearchWord)'>
+		     where acc_addr1 like '%'|| #{blendSearchWord} || '%' or acc_name like '%'|| #{blendSearchWord} || '%' or region_shortname like '%' || #{blendSearchWord} || '%'
+		     </if>
+		group by acc_type
+	</select>
+	
+
+</mapper>
