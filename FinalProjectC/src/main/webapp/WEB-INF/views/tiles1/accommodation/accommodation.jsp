@@ -50,11 +50,142 @@
 		$(".btn-default").click(function(){
 			$("#blendSearchWord").val("");
 		}); // end of 검색바 x -----------------
+
+		
+		/// 검색어 자동 완성2: 검색어 입력시 이벤트 ///
+		$("#blendSearchWord").keyup(function(){
+			// 이벤트 발생하는 곳.keyup
+			
+			search_data = {blendSearchWordAjax:$("#blendSearchWord").val()};
+			
+			$.ajax({
+				url: "<%= request.getContextPath()%>/accommodation/autoSearchWord.we",
+				type: "GET",
+				data: search_data,
+				dataType: "JSON",
+				success: function(jsonArr){
+					
+					// 검색어 자동 완성4
+					// 검색된 데이터가 있는 경우
+					if(jsonArr.length > 0){
+
+						var searchWordlen = $("#blendSearchWord").val().length;
+						var fullAddrHtml = "";
+						var fullNameHtml = "";
+						var longRegHtml = "";
+						
+						$.each(jsonArr, function(jrIndex, jrItem){
+							
+							var accAddrNameList = jrItem.accAddrNameList;
+							var accRegionList = jrItem.accRegionList;
+
+							// 주소+이름 뽑음
+							if(accAddrNameList != null && accAddrNameList != "" && accAddrNameList.length>0) {	
+								
+								var acc_addr1 = "";
+								var acc_addr2 = "";
+								var acc_name = "";
+								
+								// 주소+이름 뽑음.
+								$.each(accAddrNameList,function(accIndex, accItem){
+									
+									acc_addr1 = accItem.acc_addr1;
+									acc_addr2 = accItem.acc_addr2;
+									acc_name = accItem.acc_name;
+									
+									var ad1Index = acc_addr1.toLowerCase().indexOf( $("#blendSearchWord").val().toLowerCase() );
+									var ad2Index = acc_addr2.toLowerCase().indexOf( $("#blendSearchWord").val().toLowerCase() );
+									var anIndex = acc_name.toLowerCase().indexOf( $("#blendSearchWord").val().toLowerCase() );
+									 
+									var fullAddrName = "";
+									if(ad1Index > -1) { // 함수로 만들어서 문자열로 반환시키면, html로 합칠 때 쌍따옴표가 중복이 되어서 그런지 태그가 문자열로 들어가서 검색어로 읽힘. 그래서 다 써줘야됨.
+										fullAddrName +="<span class='firstWord' style='color: #777777'>"+acc_addr1.substr(0, ad1Index)+"</span>"
+													 + "<span class='secondWord' style='font-weight:bold; color: #ff2f8b'>"+acc_addr1.substr(ad1Index, searchWordlen)+"</span>"
+													 + "<span class='thirdWord' style='color: #777777'>"+acc_addr1.substr(ad1Index+searchWordlen, (acc_addr1.length - (ad1Index+searchWordlen)) )+"</span>";
+									}
+									if(ad2Index > -1) {
+										fullAddrName +="<span class='firstWord' style='color: #777777'>"+acc_addr2.substr(0, ad2Index)+"</span>"
+													 + "<span class='secondWord' style='font-weight:bold; color: #ff2f8b''>"+acc_addr2.substr(ad2Index, searchWordlen)+"</span>"
+													 + "<span class='thirdWord' style='color: #777777'>"+acc_addr2.substr(ad2Index+searchWordlen, (acc_addr2.length - (ad2Index+searchWordlen)) )+"</span>";
+									}
+
+									var hotelName = "";
+									if(anIndex > -1) {
+										hotelName +="<span class='firstWord' style='color: #777777'>"+acc_name.substr(0, anIndex)+"</span>"
+												  + "<span class='secondWord' style='font-weight:bold; color: #ff2f8b''>"+acc_name.substr(anIndex, searchWordlen)+"</span>"
+												  + "<span class='thirdWord' style='color: #777777'>"+acc_name.substr(anIndex+searchWordlen, (acc_name.length - (anIndex+searchWordlen)) )+"</span>";
+									}
+
+									fullAddrHtml += "<span style='cursor:pointer; color: #ff2f8b'>"+fullAddrName+"</span><br/>"; 
+									fullNameHtml += "<span style='cursor:pointer; color: #ff2f8b'>"+hotelName+"</span><br/>";
+								});				
+							} // end of if 주소+이름 뽑음 ---------
+							
+							 // 지역명 뽑음
+							//if(keyNames == "accRegionList" && keyNames != null && keyNames != "") {
+							if(accRegionList != null && accRegionList != "" && accRegionList.length>0) {	
+
+								var regionLongName = "";
+
+								$.each(accRegionList,function(regIndex, regItem){
+									
+									regionLongName = regItem.region_name;
+									
+									var regLongIndex = regionLongName.toLowerCase().indexOf( $("#blendSearchWord").val().toLowerCase() );
+
+									var regLongName = "";
+									if(regLongIndex > -1) {
+										regLongName +="<span class='firstWord' style='color: #777777'>"+regLongName.substr(0, regLongIndex)+"</span>"
+													 + "<span class='secondWord' style='font-weight:bold; color: #ff2f8b''>"+regLongName.substr(regLongIndex, searchWordlen)+"</span>"
+													 + "<span class='thirdWord' style='color: #777777'>"+regLongName.substr(regLongIndex+searchWordlen, (regLongName.length - (regLongIndex+searchWordlen)) )+"</span>";
+									}
+									
+									longRegHtml += "<span style='cursor:pointer; color: #ff2f8b'>"+regionLongName+"</span><br/>";
+								});
+							} // end of if 지역명 뽑음-----
+						}); // end of each --------------
+						
+ 						$(".searchWordListInner").html(longRegHtml+fullAddrHtml); // shorRegHtml+longRegHtml+
+						$(".searchWordListWrapper").show();
+					}
+					// 검색된 데이터가 존재하지 않을 경우
+					else {
+						$(".searchWordListWrapper").hide();
+					} // end of if ~ else ----------------
+				},
+				error: function(request, status, error){
+					alert("code: "+request.status+"\n"+"message: "+request.responseText+"\n"+"error: "+error);
+				}
+			}); // end of ajax --------
+			
+		}); // end of 자동글 완성 이벤트 -------------
+		
+		/// 검색어 자동 완성5: 검색어 클릭 시 input에 해당 검색어만 남기고, 검색어 결과는 숨김. ///
+		// 텍스트 길이가 일정 이상을 벗어나면, x자 숨기기. 그 이하면 x자 나타내기 하기.
+		$(".searchWordListWrapper").click(function(){
+			var word = "";
+			var $target = $(event.target);
+
+			if($target.is(".firstWord")) {
+				word = $target.text() + $target.next().text() + $target.next().next().text();
+			}
+			else if($target.is(".secondWord")) {
+				word = $target.prev().text() + $target.text() + $target.next().text();
+			}
+			else if($target.is(".thirdWord")) {
+				word = $target.prev().prev().text() + $target.prev().text() + $target.text();
+			}
+			$("#blendSearchWord").val(word);
+			$(".searchWordListWrapper").hide();
+		}); // end of 검색어 닫기 ----------
 		
 		
-		/// 호텔 등급 & 타입 받기 ///
-		receiveAccGrade();
+		
+		/// 호텔 타입 받기 & 체크박스 제어 ///
 		receiveAccType();
+		receiveAccGrade();
+		
+		
 		
 		/// 숙박일 미정 체크 시 check-in/out 박스 값 없애고 disabled 만들기
 	    $("#undecidedDates").change(function(){
@@ -75,7 +206,7 @@
 	        
 	    }); // end of 숙박일 미정 체크 이벤트 ---------
 	    
-	    
+	    	    
 	    
 	    /// 예보기간 선택 이벤트 ///
 	    $("#blendWeatherDaysOpt").change(function(){
@@ -88,31 +219,37 @@
 	    }); // end of 예보기간 선택 이벤트 -------------
 	    
 	    
-	    /// 통합검색 폼 양식 보내기 ///
+	    
+	    /// 통합검색 버튼 클릭 시 폼 양식 보내기 ///
 	    $("#blendedSearchBtn").click(function(){
-	    	
-	    	console.log("날씨기간: "+$("#blendWeatherDaysOpt").val());
-	    	console.log("날씨종류: "+$("#blendWeatherOpt").val());
-	    	
-	    	// 예보기간 선택했는데, 날씨 선택 안 했으면 경고함.
-	    	if( ($("#blendWeatherDaysOpt").val() != "" && $("#blendWeatherDaysOpt").val() != null) &&
-	    		($("#blendWeatherOpt").val() == "" || $("#blendWeatherOpt").val() == null) ) {
-	    		alert("날씨를 선택해줘!");
-	    		return;
-	    	}
-			
-	    	// 날씨 선택했는데, 예보기간 선택 안 했으면 경고함.
-	    	if( ($("#blendWeatherOpt").val() != "" && $("#blendWeatherOpt").val() != null) &&
-	    		($("#blendWeatherDaysOpt").val() == "" || $("#blendWeatherDaysOpt").val() == null) ) {
-	    		alert("예보기간을 선택해줘!");
-	    		return;
-	    	}
+	    	var check = checkWeatherOpt();
+	    	if(check == false)	return;
 	    	goBlendedSearch();
-	    	
 	    }); // end of 통합검색 폼 양식 보내기 ---------
 	    
 	    
+		 /// 검색어 엔터키 입력했을 시, 폼 양식을 제출함. ///
+	    $("#blendSearchWord").keydown(function(event){
+			if(event.keyCode == 13) { // 엔터를 했을 경우
+				var check = checkWeatherOpt();
+		    	if(check == false)	return;
+				goBlendedSearch();
+			}
+		}); // end of 검색바 엔터 ----------------------
 	    
+		
+	    /// 페이지 바 클릭 시 ///
+	    $(".pageBar").click(function(){
+	    	
+	    	var check = checkWeatherOpt();
+	    	if(check == false)	return;
+	    	
+	    	$("#currentPageNo").val($(this).attr("currentPageNo"));
+	    	
+	    	goBlendedSearch();
+	    }); // end of 통합검색 폼 양식 보내기 ---------
+	    
+			    
 	    /// 호텔등급 및 호텔 종류 선택/해제 시 통합검색 폼 양식 보냄. ///
  	    $("[name='acc_grade']").click(function(){
 	    	goBlendedSearch();
@@ -122,35 +259,72 @@
 	    }); // end of 호텔 종류 변경 시 통합검색 보냄 ----------
 	    
 	    
-	    
 	}); // end of document ready -----------------
 
 	
 	
 	
 	/// 통합검색 제출 함수 ///
-	function goBlendedSearch() {
-    	
-		var frm = document.blendedSearchFrm;
-		frm.method = "GET";
-		frm.action = "<%= ctxPath%>/accommodation/accList.we";
-		frm.submit();
-
+	function goBlendedSearch(idx) {
+		if(idx != null && idx != "") {
+			var frm = document.blendedSearchFrm;
+			frm.
+			frm.method = "GET";
+			frm.action = "<%= ctxPath%>/accommodation/accView.we?acc_idx="+idx;
+			frm.submit();
+		}
+		else {
+			var frm = document.blendedSearchFrm;
+			frm.method = "GET";
+			frm.action = "<%= ctxPath%>/accommodation/accList.we";
+			frm.submit();
+		}
 	} // end of 통합검색 ---------------
 	
 	
 	
-    /// 호텔 등급 받아온 값 꽂아줌: 옵션 유지 위함임. ///
-    function receiveAccGrade() {
 	
+	/// 통합검색 제출 시, 날씨옵션 확인 절차 ///
+	function checkWeatherOpt() {
+		
+		var check = true;
+		
+    	console.log("날씨기간: "+$("#blendWeatherDaysOpt").val());
+    	console.log("날씨종류: "+$("#blendWeatherOpt").val());
+    	
+    	// 예보기간 선택했는데, 날씨 선택 안 했으면 경고함.
+    	if( ($("#blendWeatherDaysOpt").val() != "" && $("#blendWeatherDaysOpt").val() != null) &&
+    		($("#blendWeatherOpt").val() == "" || $("#blendWeatherOpt").val() == null) ) {
+    		alert("날씨를 선택해줘!");
+    		check = false;
+    	}
+		
+    	// 날씨 선택했는데, 예보기간 선택 안 했으면 경고함.
+    	if( ($("#blendWeatherOpt").val() != "" && $("#blendWeatherOpt").val() != null) &&
+    		($("#blendWeatherDaysOpt").val() == "" || $("#blendWeatherDaysOpt").val() == null) ) {
+    		alert("예보기간을 선택해줘!");
+    		check = false;
+    	}
+		
+    	return check;
+    	
+	} // end of 날씨 옵션 확인 절차 ----------
+	
+	
+	
+	
+	
+    /// 호텔 등급 체크박스 제어 ///
+    function receiveAccGrade() {
+		
+		/*	var acc_gradeArr = "${requestScope.acc_gradeArr}";
+			console.log("배열 사이즈: "+acc_gradeArr.length);
+			- 이러면 문자열로 받아서 문자열 사이즈로 나와서 써먹지 못함..
+			- 배열에 넣으면, 문자 하나하나가 한 방씩 차지해서 못 써먹고.. */
+		
+    	var accGradeList = new Array();
+		
 		// 컨트롤러에서 보낸 값을 받아오자
-		//	: js/jquery는 브라우저 언어이고 JAVA, jstl, el 등은 서버언어 이기 때문에, 직접 값을 주고받을 수 없음.
-		//	: 따라서, jstl로 컨트롤러에서 보낸 값을 받고, 그 값을 배열로 받아준 후, 그 배열을 js/jquery에 대입해줘야 함.
-		var accGradeList = new Array();
-		var aGradeCntList = new Array();
-		var aTypeCntList = new Array();
-
-		// 호텔 등급
 		<c:if test="${acc_gradeArr != null && not empty acc_gradeArr}">
 			<c:forEach var="accGrade" items="${acc_gradeArr}" varStatus="status">
 				var gradeArray = new Object();
@@ -158,23 +332,10 @@
 				accGradeList.push(gradeArray);
 			</c:forEach>
 		</c:if>
-		// console.log("호텔등급: "+JSON.stringify(accGradeList));
 		
+		var parsedList = JSON.stringify(accGradeList);
+		// console.log("호텔등급: "+parsedList);
 		
-		// 호텔 등급과 그 개수
-		<c:if test="${accGradeCntList != null && not empty accGradeCntList}">
-			<c:forEach var="gradeCnt" items="${accGradeCntList}" varStatus="status">
-				var gradeJson = new Object();
-				gradeJson.key${gradeCnt.acc_grade} = "${gradeCnt.CNT}";
-				aGradeCntList.push(gradeJson);
-			</c:forEach>
-		</c:if>
-
-		 var gradeCntJsonArray = JSON.stringify(aGradeCntList[0]) ;
-		console.log(gradeCntJsonArray); // ==> [{"key1":"1"},{"key2":"2"},{"key5":"4"},{"key4":"4"},{"key3":"1"}]
-		var gradeCntJson = JSON.parse(gradeCntJsonArray);
-		var str_grade = gradeCntJson.key1;
-		console.log(str_grade);
 		
 		// 호텔 등급 체크박스 제어
 		if(accGradeList != null && accGradeList != "") {
@@ -190,28 +351,11 @@
 						// console.log("호텔등급 찾음! "+$(this).val());
 						$(this).prop("checked", true); // 값 온 것만 다시 체크
 					}
-				}); // end of 체크박스 체크
-
-				// 등급 문자 꽂아주기
-				var key = "key";
-				$(".gradeListAnchor").each(function(index, anchorItem) {
-					// console.log($(this).text());
-					key = key+($(this).text());
-				//	console.log(key);
-				//	console.log(gradeCntJson.key);
-
-						//if(gradeCntJson.key$(this).text() == $(this).text()) {
-						
-						// $(this).text(gradeItem+"-stars");
-						//}
-					
 				});
-				
-				
-			});
+			}); // end of 반복문
 		}
 		else {
-			$("[name='acc_grade']").prop("checked", true); // 일단 전부 체크 해제
+			$("[name='acc_grade']").prop("checked", true); // 전부 체크 해제
 		}
 		
     } // end of 호텔 등급 받기 -------------
@@ -220,10 +364,28 @@
     
     /// 호텔 종류 받아온 값 꽂아줌: 옵션 유지 위함임. ///
     function receiveAccType() {
-	
+
+		<%-- // 호텔 등급과 그 개수
+		<c:if test="${accGradeCntList != null && not empty accGradeCntList}">
+			<c:forEach var="gradeCnt" items="${accGradeCntList}" varStatus="status">
+				var gradeJson = new Object();
+				gradeJson.key${gradeCnt.acc_grade} = "${gradeCnt.CNT}";
+				aGradeCntList.push(gradeJson);
+			</c:forEach>
+		</c:if>
+
+		var gradeCntJsonArray = JSON.stringify(aGradeCntList[0]) ;
+		// console.log(gradeCntJsonArray); // ==> {"key1":"1"}
+		// 배열이라서 그대로 문자열로 변환하면 이렇게 나옴. [{"key1":"1"},{"key2":"2"},{"key5":"4"},{"key4":"4"},{"key3":"1"}]
+		// 근데 이렇게 나오면 파싱이 안됨..
+		var gradeCntJson = JSON.parse(gradeCntJsonArray);
+		var str_grade = gradeCntJson.key1;
+		// console.log(str_grade); --%>
+    	
+    	
 		// 컨트롤러에서 보낸 값을 받아오자
 		var accTypeList = new Array();
-
+		
 		<c:if test="${acc_typeArr != null && not empty acc_typeArr}">
 			<c:forEach var="accType" items="${acc_typeArr}" varStatus="status">
 				var typeArray = new Object();
@@ -232,7 +394,7 @@
 			</c:forEach>
 		</c:if>
 		
-		// console.log("호텔등급: "+JSON.stringify(accGradeList));
+		// console.log("호텔타입: "+JSON.stringify(accTypeList));
 		
 		
 		if(accTypeList != null && accTypeList != "") {
@@ -339,98 +501,115 @@
 	
 	/// ajax로 중기예보(3일후 오후 기준) 지역을 얻어오는 함수 ///
 	function receiveLongWeather() {
-	  
-			/// 날씨 api로 지역을 뽑아옴. /// -> 이걸 첫번째가 성공하면, 두번째를 그 안에서 보내고, 두번쨰 성공하면 세번째를 그 안에서 보내고... 10번 반복하면 될듯?
+		
+		var regidArray = ["11B00000","11D10000","11D20000","11C20000","11C10000","11F20000","11F10000","11H10000","11H20000","11G00000"];
+		
+		var sunnyWeather = "";
+		var cloudyWeather = "";
+		var badWeather = "";
+		var nthWeather = "";
+		
+		/// 날씨 api로 지역을 뽑아옴: 10번 반복 ///
+		for(var i=0; i<regidArray.length; i++) {
+		
 			$.ajax({
 				url: "<%= ctxPath%>/accommodation/kLongWeatherXML.we",
 				type: "GET",
+				async:false, // 에이작스 반복호출 시, 응답 받은 후에 다음 에이작스를 실행하게 해주는 옵션. 이걸 안 하면, 응답 안 받고 다음 에이작스 돌려서 에러남.
+				data: {"regid":regidArray[i]}, // 중부지방
 				dataType: "XML",
 				success: function(xml){
+	
+					////////////////////////////////////////////////////
+					/*var body = $(rootElement).find("body");
+					console.log($(body).prop("tagName"));   // body
+					var itemNode = xml.getElementsByTagName("item")[0];
+					var regIdVal = itemNode.firstChild.nodeValue;
+					console.log("regIdVal : "+regIdVal);   // regIdVal : null
+					var items = $(body).find("items");
+					console.log($(items).prop("tagName"));   // items
+					var itemshaha = $(xml).find("response").find("body").find("items");
+					console.log($(itemshaha).text());  // 11B0000030403030303030303010102020구름많음구름많음구름많음구름많음구름많음구름많음구름많음구름많음구름많음맑음맑음맑음맑음
+					var item = $(itemshaha).find("item");
+					console.log($(item).prop("tagName"));   // item 
+					var numOfRows = $(body).find("numOfRows");
+					console.log($(numOfRows).text());  //  10  */
+					////////////////////////////////////////////////////
 					
-					console.log("성공!");
+					var regId = $(xml).find("regId").text(); // 지역코드
+					console.log("지역코드 받아온 것"+i+": "+regId);
+					var wf3Pm = $(xml).find("wf3Pm").text(); // 3일 후 날씨
 					
-					var rootElement = $(xml).find(":root");
-					// console.log($(rootElement).prop("tagName")); // ==> response
-
-					var regid = $(rootElement).find("regid");
-					// console.log($(regid).text()); // ==> 공백
-					// console.log($(rootElement).find("regid")); // ==> r.fn.init(0)
-					// console.log($(rootElement).find("regid").prop("tagName")); // ==> undefined
-					// console.log(typeof($(rootElement).find("regid"))); // ==> object
+					var weatherArray = middleWeatherDistinguish(regId, wf3Pm);
 					
-					// console.log($(rootElement).find("regid").text()); // ==> 공백
-					// console.log(typeof($(rootElement).find("regid").text())); // ==> string
-					// console.log($(rootElement).find("items").find("item").find("regid").text()); // 공백
-					
-					// console.log($(rootElement).find("regid").val()); // ==> undefined
-					// console.log(typeof($(rootElement).find("regid").val())); // ==> undefined
-					
-					// console.log($(rootElement).find("regid").attr()); // ==> 에러 내용: r.fn.init.attr
-
-					// console.log($(xml).find("regid").prop("tagName")); // ==> undefined
-					// console.log(document.querySelector("body > response > items > item > regid")); // ==> null
-					
-					var sunnyWeather = "";
-					var cloudyWeather = "";
-					var badWeather = "";
-					var nthWeather = "";
-					
-					<%--
-					var wf3PmArr =  $(rootElement).find("wf3Pm");
-					
-					for(var i=0; i<regidArr.length; i++) {
-						console.log($(regidArr).eq(i).text());
-						
-						// 지역명은 코드로 오기 때문에, 코드를 지역명으로 바꿔줘야 됨. 아직 먹히는지 안 먹히는지는 모름;
-						if($(regidArr).eq(i).text() == "11B00000") { $(regidArr).eq(i).text("서울,인천,경기도") };
-						if($(regidArr).eq(i).text() == "11D10000") { $(regidArr).eq(i).text("강원도") }; // 영서
-						if($(regidArr).eq(i).text() == "11D20000") { $(regidArr).eq(i).text("강원도") }; // 영동
-						if($(regidArr).eq(i).text() == "11C20000") { $(regidArr).eq(i).text("대전,세종,충청남도") };
-						if($(regidArr).eq(i).text() == "11C10000") { $(regidArr).eq(i).text("충청북도") };
-						if($(regidArr).eq(i).text() == "11F20000") { $(regidArr).eq(i).text("광주,전라남도") };
-						if($(regidArr).eq(i).text() == "11F10000") { $(regidArr).eq(i).text("전라북도") };
-						if($(regidArr).eq(i).text() == "11H10000") { $(regidArr).eq(i).text("대구,경상북도") };
-						if($(regidArr).eq(i).text() == "11H20000") { $(regidArr).eq(i).text("부산,울산,경상남도") };
-						if($(regidArr).eq(i).text() == "11G00000") { $(regidArr).eq(i).text("제주도") };
-						
-						
-						var wf3Pm = $(wf3PmArr).eq(i); // 3일 후 날씨
-						
-						// 날씨별 지역명 뽑자: 오후날씨
-						if( $(wf3Pm).text().indexOf("맑음") != -1 ) {
-							sunnyWeather += $(regidArr).eq(i)+",";
-						}
-						else if( $(wf3Pm).text().indexOf("흐림") != -1 || $(wf3Pm).text().indexOf("구름많음") != -1 || $(wf3Pm).text().indexOf("구름조금") != -1 ) {
-							cloudyWeather += $(regidArr).eq(i)+",";
-						}
-						else if ( $(wf3Pm).text().indexOf("비") != -1 || $(wf3Pm).text().indexOf("박무") != -1 || $(wf3Pm).text().indexOf("안개") != -1 || $(wf3Pm).text().indexOf("천둥번개") != -1 ) {
-							badWeather += $(regidArr).eq(i)+",";
-						}
-						else {
-							nthWeather += $(regidArr).eq(i)+",";
-						}
-						
-					} // end of for ----------- --%>
-					
+					sunnyWeather += weatherArray[0];
+					cloudyWeather += weatherArray[1];
+					badWeather += weatherArray[2];
 					
 					console.log("맑음: "+sunnyWeather);
 					console.log("흐림: "+cloudyWeather);
 					console.log("나쁨: "+badWeather);
-					
-					// 히든폼에 날씨 지역 코드값을 꽂아줌.
-					$("#sunnyWeather").val(sunnyWeather);
-					$("#cloudyWeather").val(cloudyWeather);
-					$("#badWeather").val(badWeather);
-					
-					
 				},
 				error: function(request, status, error){
 					alert("code: "+request.status+"\n"+"message: "+request.responseText+"\n"+"error: "+error);
 				}
 			}); // end of ajax ---------
-			
+		} // end of for -------
+		
+		// 히든폼에 날씨 지역 코드값을 꽂아줌.
+		$("#sunnyWeather").val(sunnyWeather);
+		$("#cloudyWeather").val(cloudyWeather);
+		$("#badWeather").val(badWeather);
+
+		/* 
+		alert("맑음 : " + $("#sunnyWeather").val());
+		alert("흐림 : " + $("#cloudyWeather").val());
+		alert("나쁨 : " + $("#badWeather").val()); */
+		
 	} // end of ajax로 중기예보(3일후) 지역을 얻어오는 함수 --------------------------------------------
+
 	
+	
+	// 중기예보 지역 솎아내는 함수
+	function middleWeatherDistinguish(regId, wf3Pm) {
+		
+		// 중기예보는 날씨 지역이 코드로 와서, 지역명으로 바꿔줘야 됨.
+		if(regId == "11B00000") { regId = "서울,인천,경기도"; }
+		if(regId == "11D10000") { regId = "영월,평창,정선,원주시,춘천시,홍천,횡성"; } // 강원도 영서
+		if(regId == "11D20000") { regId = "속초,강릉,양양,동해,삼척,태백"; } // 강원도 영동
+		if(regId == "11C20000") { regId = "대전,세종,충청남도"; }
+		if(regId == "11C10000") { regId = "충청북도"; }
+		if(regId == "11F20000") { regId = "광주,전라남도"; }
+		if(regId == "11F10000") { regId = "전라북도"; }
+		if(regId == "11H10000") { regId = "대구,경상북도"; }
+		if(regId == "11H20000") { regId = "부산,울산,경상남도"; }
+		if(regId == "11G00000") { regId = "제주"; }
+
+		
+		var sunnyWeather = "";
+		var cloudyWeather = "";
+		var badWeather = "";
+		var nthWeather = "";
+
+		// 날씨에 맞는 변수에 지역명을 넣어주자
+		if( wf3Pm.indexOf("맑음") != -1 ) {
+			sunnyWeather += regId+",";
+		}
+		else if( wf3Pm.indexOf("흐림") != -1 || wf3Pm.indexOf("구름많음") != -1 || wf3Pm.indexOf("구름조금") != -1 ) {
+			cloudyWeather += regId+",";
+		}
+		else if ( wf3Pm.indexOf("비") != -1 || wf3Pm.indexOf("박무") != -1 || wf3Pm.indexOf("안개") != -1 || wf3Pm.indexOf("천둥번개") != -1 ) {
+			badWeather += regId+",";
+		}
+		else {
+			nthWeather += regId+",";
+		}
+
+		var weatherArray = [sunnyWeather,cloudyWeather,badWeather];
+		
+		return weatherArray;
+		
+	} // end of 중기예보 지역 솎아내는 함수 ----------
 	
 	
 	
@@ -444,56 +623,15 @@
 </script>
 
 
-    <%--================ 여긴 뭐 넣지.. =================--%>
-    <section class="blog_categorie_area">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4">
-                    <div class="categories_post">
-                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-3.jpg" alt="post">
-                        <div class="categories_details">
-                            <div class="categories_text">
-                                <a href="blog-details.html">
-                                    <h5>Social Life</h5>
-                                </a>
-                                <div class="border_line"></div>
-                                <p>Enjoy your social life together</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="categories_post">
-                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-2.jpg" alt="post">
-                        <div class="categories_details">
-                            <div class="categories_text">
-                                <a href="blog-details.html">
-                                    <h5>Politics</h5>
-                                </a>
-                                <div class="border_line"></div>
-                                <p>Be a part of politics</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="categories_post">
-                        <img src="<%= ctxPath%>/resources/img/blog/cat-post/cat-post-1.jpg" alt="post">
-                        <div class="categories_details">
-                            <div class="categories_text">
-                                <a href="blog-details.html">
-                                    <h5>Food</h5>
-                                </a>
-                                <div class="border_line"></div>
-                                <p>Let the food be finished</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <%--================ 여긴 뭐 넣지.. =================--%>
+    <%--================ 타이틀 =================--%>
+	<div class="col-lg-12" style="margin-top: 90px;">
+		<div class="main_title">
+			<p>We’re Offering these Popular Accommodation</p>
+			<h1>Getting Accommodation with Services</h1>
+			<span class="title-widget-bg"></span>
+		</div>
+	</div>
+    <%--================ 타이틀 =================--%>
 
 
 
@@ -558,7 +696,7 @@
 											<p>
 												${accvo.acc_text}
 											</p>
-											<a href="<%= request.getContextPath() %>/accommodation/accView.we?acc_idx=${accvo.acc_idx}" class="primary-btn">Read More</a>
+											<a class="primary-btn" onclick="goBlendedSearch('${accvo.acc_idx}');">Read More</a>
 										</div>
 									</div>
 								</c:forEach>
@@ -570,31 +708,45 @@
 							
 						</div>
 						<%-- 결과 리스트 나오는 부분 끝 --%>
+
 						
 						<%-- 페이지바 부분 --%>
-                        <nav class="blog-pagination justify-content-center d-flex">
-                            <ul class="pagination">
-                                <li class="page-item">
-                                    <a href="#" class="page-link" aria-label="Previous">
-                                        <span aria-hidden="true">
-                                            <span class="lnr lnr-chevron-left"></span>
-                                        </span>
-                                    </a>
-                                </li>
-                                <li class="page-item"><a href="#" class="page-link">01</a></li>
-                                <li class="page-item active"><a href="#" class="page-link">02</a></li>
-                                <li class="page-item"><a href="#" class="page-link">03</a></li>
-                                <li class="page-item"><a href="#" class="page-link">04</a></li>
-                                <li class="page-item"><a href="#" class="page-link">09</a></li>
-                                <li class="page-item">
-                                    <a href="#" class="page-link" aria-label="Next">
-                                        <span aria-hidden="true">
-                                            <span class="lnr lnr-chevron-right"></span>
-                                        </span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
+						<nav class="blog-pagination justify-content-center d-flex">
+							<ul class="pagination">
+							
+							<c:if test="${prev != null && prev != 0 && prev != ''}">
+								<li class="page-item">
+									<a class="page-link" aria-label="Previous">
+										<span aria-hidden="true">
+											<span class="lnr lnr-chevron-left pageBar" currentPageNo="${prev}"></span>
+										</span>
+									</a>
+								</li>
+							</c:if>
+							
+							<c:if test="${pageNoList != null && pageNoList != ''}">
+								<c:forEach var="pageNo" items="${pageNoList}">
+									<c:if test="${pageNo == currentPageNo}">
+										<li class="page-item active"><a class="page-link pageBar" currentPageNo="${pageNo}">${pageNo}</a></li>
+									</c:if>
+									<c:if test="${pageNo != currentPageNo}">
+										<li class="page-item"><a class="page-link pageBar" currentPageNo="${pageNo}">${pageNo}</a></li>
+									</c:if>
+								</c:forEach>
+							</c:if>
+
+							<c:if test="${next != null && next != 0 && next != ''}">							
+								<li class="page-item">
+									<a href="#" class="page-link" aria-label="Next">
+										<span aria-hidden="true">
+											<span class="lnr lnr-chevron-right pageBar" currentPageNo="${next}"></span>
+										</span>
+									</a>
+								</li>
+							</c:if>
+							
+							</ul>
+						</nav>
                         
                         
                     </div>
@@ -608,7 +760,8 @@
 
 <%-- >>> 호텔 종류까지의 사이드바 폼 시작 <<< --%>
 <form name="blendedSearchFrm">
-
+	<input type="hidden" id="currentPageNo" name="currentPageNo" value=""/><%-- 페이지바 때문에 만듦. --%>
+	
 					<%-- ============= 검색바 시작 ================ --%>
 					<aside class="single_sidebar_widget search_widget author_widget">
                             <h3 style="margin-bottom: 50px;">Blended Search</h3>
@@ -619,11 +772,14 @@
 	                                    <button class="btn btn-default" type="button"><i class="lnr lnr-cross"></i></button>
 	                                </span>
 	                            </div>
-	                            <%-- 검색어 자동 완성: 검색어 입력 부분 --%>
+	                            <%-- 검색어 자동 완성1: 검색어 입력 부분 (안쪽 DIV에 값을 넣어줘야 됨.) --%>
 								<div class="searchWordListWrapper" style="overflow: auto; width:100%; background: linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
-																		  margin: 0 auto; height: 150px; position: absolute; padding: 1px; border-radius: 10px;
+																		  margin: 0 auto; height: 150px; position: absolute; padding: 3px; border-radius: 10px;
 																		  margin-top: 37px; z-index: 300;">
-									<div class="searchWordListInner" style="background-color: white; width: 100%; height: 99.9%; border-radius: 10px;"></div>
+									<div class="searchWordListInner" style="background-color: white; width: 100%; height: 99.9%;
+																			border-radius: 10px; overflow: hidden; text-align: left;
+																			padding: 4px;">
+									</div>
 								</div>
                             </div>
 							<%-- 체크인 박스 --%>
@@ -735,7 +891,6 @@
                                    <div style="display: inline; padding-right: 38px; color: black; font-weight: 600;">어른</div>
 									<div class="default-select" style="width: 130px; display: inline-flex;">
 										<select name="adultNum">
-											<option value="">선택</option>
 											<c:forEach begin="1" end="4" step="1" varStatus="status">
 												<option value="${status.count}" ${status.count==adultNum?'selected':''}>${status.count}명</option>
 											</c:forEach>
@@ -749,7 +904,6 @@
                                    <div style="display: inline; padding-right: 38px; color: black; font-weight: 600;">아이</div>
 									<div class="default-select" style="width: 130px; display: inline-flex;">
 										<select name="kidsNum">
-											<option value="">선택</option>
 											<c:forEach begin="1" end="4" step="1" varStatus="status">
 												<option value="${status.count}" ${status.count==kidsNum?'selected':''}>${status.count}명</option>
 											</c:forEach>
@@ -761,14 +915,14 @@
 								<div class="widget price" style="width: 94%; text-align: center;">
 									<div class="widget-desc">
 										<div class="slider-range">
-											<div data-min="0" data-max="777777" data-unit=" &#8361;" class="slider-range-price ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all" data-value-min="0" data-value-max="777777" data-label-result="Price:">
+											<div data-min="0" data-max="7777777" data-unit=" &#8361;" class="slider-range-price ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all" data-value-min="0" data-value-max="7777777" data-label-result="Price:">
 												<div class="ui-slider-range ui-widget-header ui-corner-all"></div>
 												<span class="ui-slider-handle ui-state-default ui-corner-all" tabindex="0" style="margin-left: 0px;"></span>
 												<span class="ui-slider-handle ui-state-default ui-corner-all" tabindex="0" style="margin-left: 0px;"></span>
 											</div>
 											<c:if test="${(not empty accListPrice1 && accListPrice1 !=null && accListPrice1 != '') &&
 														  (empty accListPrice2 || accListPrice2 == null || accListPrice2 == '')}">
-												<div class="range-price">Price: <fmt:formatNumber value="${accListPrice1}" maxFractionDigits="3" /> - 777,777 &#8361;</div>
+												<div class="range-price">Price: <fmt:formatNumber value="${accListPrice1}" maxFractionDigits="3" /> - 7,777,777 &#8361;</div>
 												<input type="hidden" class="accListPrice1" name="accListPrice1" value="${accListPrice1}" />
 												<input type="hidden" class="accListPrice2" name="accListPrice2" value="" />
 											</c:if>
@@ -786,7 +940,7 @@
 											</c:if>
 											<c:if test="${(empty accListPrice1 || accListPrice1 ==null || accListPrice1 == '') &&
 														  (empty accListPrice2 || accListPrice2 == null || accListPrice2 == '')}">
-												<div class="range-price">Price: 0 - 777,777 &#8361;</div>
+												<div class="range-price">Price: 0 - 7,777,777 &#8361;</div>
 												<input type="hidden" class="accListPrice1" name="accListPrice1" value="" />
 												<input type="hidden" class="accListPrice2" name="accListPrice2" value="" />
 											</c:if>
@@ -810,18 +964,31 @@
                             <h4 class="widget_title">Star Rating</h4>
                             <ul class="list cat-list">
                             <c:forEach begin="1" end="5" step="1" varStatus="status">
+                            <c:set var="flag" value="true" />
                                 <li>
 									<div class="d-flex justify-content-between">
-										<label for="primary-checkbox${status.end-status.count+1}" style="margin-bottom: 0; cursor: pointer;">
-											<a class="gradeListAnchor">${status.end-status.count+1}</a>
-											<c:if test="${empty accGradeCntList || accGradeCntList == null}">
+										<label for="accGrade-checkbox${status.end-status.count+1}" style="margin-bottom: 0; cursor: pointer;">
+										<c:if test="${!empty accGradeCntList && accGradeCntList != null}">
+											<c:forEach var="accGradeCnt" items="${accGradeCntList}" >
+												<c:if test="${accGradeCnt.acc_grade == (status.end-status.count+1)}">
+													<a>${status.end-status.count+1}-Star (${accGradeCnt.CNT})</a>
+													<c:set var="flag" value="false" />
+												</c:if>
+											</c:forEach>
+											<%-- <c:forEach begin="1" end="${5-fn:length(accGradeCntList)}" step="1" >
+											</c:forEach> --%>
+											<c:if test="${flag == 'true'}">
 												<a>${status.end-status.count+1}-Star (0)</a>
 											</c:if>
-										</label>
-										<div class="primary-checkbox">
-											<input type="checkbox" name="acc_grade" id="primary-checkbox${status.end-status.count+1}" value="${status.end-status.count+1}" />
-											<label for="primary-checkbox${status.end-status.count+1}" style="margin-bottom: 0;"></label><%-- 이거 없으면 체크박스 체크 안 됨;; --%>
-										</div>
+										</c:if>
+										<c:if test="${empty accGradeCntList || accGradeCntList == null}">
+											<a>${status.end-status.count+1}-Star (0)</a>
+										</c:if>
+									</label>
+									<div class="primary-checkbox">
+										<input type="checkbox" id="accGrade-checkbox${status.end-status.count+1}" name="acc_grade" value="${status.end-status.count+1}"/>
+										<label for="accGrade-checkbox${status.end-status.count+1}" style="margin-bottom: 0;"></label><%-- 이거 없으면 체크박스 체크 안 됨;; --%>
+									</div>
 									</div>
                                 </li>
                             </c:forEach>
@@ -857,9 +1024,10 @@
 								<div class="d-flex justify-content-between">
 									<label for="resort" style="margin-bottom: 0; cursor: pointer;">
 									<c:if test="${!empty accTypeCntList && accTypeCntList != null}">
+										<a>리조트</a>
 										<c:forEach var="accTypeCnt" items="${accTypeCntList}" >
 											<c:if test="${accTypeCnt.acc_type == '리조트'}">
-												<a>리조트 (${accTypeCnt.CNT})</a>
+												<a>(${accTypeCnt.CNT})</a>
 											</c:if>
 										</c:forEach>
 									</c:if>
@@ -879,22 +1047,15 @@
 </form>
 <%-- >>> 호텔 종류까지의 사이드바 폼 끝 <<< --%>
 
-<%-- ************* 태그 클라우드 *************************** --%>
+
+
+<%-- ************* 태그 클라우드(ajax로 바꿔야 됨) *************************** --%>
                         <aside class="single-sidebar-widget tag_cloud_widget">
-                            <h4 class="widget_title">Tag Clouds</h4>
+                            <h4 class="widget_title">the Best of Now</h4>
                             <ul class="list">
-                                <li><a href="#">Technology</a></li>
-                                <li><a href="#">Fashion</a></li>
-                                <li><a href="#">Architecture</a></li>
-                                <li><a href="#">Fashion</a></li>
-                                <li><a href="#">Food</a></li>
-                                <li><a href="#">Technology</a></li>
-                                <li><a href="#">Lifestyle</a></li>
-                                <li><a href="#">Art</a></li>
-                                <li><a href="#">Adventure</a></li>
-                                <li><a href="#">Food</a></li>
-                                <li><a href="#">Lifestyle</a></li>
-                                <li><a href="#">Adventure</a></li>
+	                            <c:forEach var="tagMap" items="${tagList}">
+	                                <li><a style="cursor: pointer;" onclick="goBlendedSearch('${tagMap.acc_idx}');">${tagMap.acc_name}</a></li>
+	                            </c:forEach>
                             </ul>
                         </aside>
 <%-- ************* 태그 클라우드 *************************** --%>

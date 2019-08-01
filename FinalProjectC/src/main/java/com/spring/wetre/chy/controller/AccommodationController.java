@@ -4,12 +4,16 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.spring.common.MyUtil;
 import com.spring.wetre.chy.service.*;
 import com.spring.wetre.model.*;
 
@@ -94,22 +98,23 @@ public class AccommodationController {
 		System.out.println("검색어: "+blendSearchWord);
 		System.out.println("날씨옵션: "+blendWeatherOpt);
 		System.out.println("날씨기간: "+blendWeatherDaysOpt);
-		
-		/*if(acc_gradeArr != null) {
+		if(acc_gradeArr != null) {
 			for(String acc_grade : acc_gradeArr) {
 				System.out.println("호텔등급:"+acc_grade);
 			}
-		}*/
-		
-		// 옵션 선택한거 장난 막아야 됨.
+		}
 
+		
+				
+		// 옵션 선택한거 장난 막아야 됨.
+		
 		
 		
 		// 옵션 중 가격은 값이 없을 경우 최소값 0, 최대값 7백만원 해줌. -> DB에 넣은 방값 중에 계산해서 7백 넘어가는거 있으면 잡아줘야 됨;
 		if(accListPrice1 == null || "".equals(accListPrice1))
 			accListPrice1 = "0";
 		if(accListPrice2 == null || "".equals(accListPrice2))
-			accListPrice2 = "777777";
+			accListPrice2 = "7777777";
 		
 		// 옵션 중 인원수는 값이 없을 경우, 전체 값을 뽑아야 하니까 기본값 1 줌.
 		if(adultNum == null || "".equals(adultNum))
@@ -128,8 +133,7 @@ public class AccommodationController {
 		optMap.put("accListPrice2", accListPrice2);
 		optMap.put("acc_gradeArr", acc_gradeArr);
 		optMap.put("acc_typeArr", acc_typeArr);
-		optMap.put("startRno", 1);
-		optMap.put("endRno", 9);
+		
 		// 검색어(blendSearchWord)만 왔을 경우
 		if( (blendSearchWord != null && !"".equals(blendSearchWord)) &&
 			(blendWeatherOpt == null || "".equals(blendWeatherOpt))) {
@@ -188,17 +192,88 @@ public class AccommodationController {
 		}
 
 		/*Object test = optMap.get("regionArr");
-		for(String sunny : (String[])test) {
-			System.out.println("좋음 들어갔니?"+sunny);
-		}*/
+		for(String sunny : (String[])test) {System.out.println("좋음 들어갔니?"+sunny);}*/
+		
+
+		// 페이징 처리 위한 변수 생성
+		String str_currentPageNo = request.getParameter("currentPageNo"); // 현재 페이지 번호를 받아옴.
+		int currentPageNo = 0; // 현재 페이지 번호. 초기치는 1페이지로 설정
+		int totalAccCnt = 0; // 총 게시물 개수
+		int sizePerPage = 9; // 한 페이지 당 보여줄 행 개수(블럭 사이즈랑 다른 것임).
+		int totalPage = 0; // 총 페이지수(페이지바에 뜰 개수 말하는거)
+		int startRno = 0;// DB에서 셀렉트한 데이터 행들의 시작행번호
+		int endRno = 0; // DB에서 셀렉트한 데이터 행들의 끝행 번호
+		int blockSize = 5; // 페이지바에 숫자 몇개씩 나오게 할건지.
+		
+		totalAccCnt = service.getAccListCount(optMap); // 검색어 (미)포함 총 게시물 수
+		System.out.println("총게시물수: "+totalAccCnt);
+		// 총 페이지수 계산
+		totalPage = (int) Math.ceil( (double)totalAccCnt/sizePerPage );
+		System.out.println("총 페이지 수: "+totalPage);
+		
+		// 페이지 번호 장난 막기: 총 게시물수가 필요해서 밑으로 내림.
+		if(str_currentPageNo == null) {
+			currentPageNo = 1;
+		}
+		else {
+			try {
+				currentPageNo = Integer.parseInt(str_currentPageNo);
+				
+				if(currentPageNo < 1 || currentPageNo > totalPage) {
+					currentPageNo = 1;
+				}
+			} catch (NumberFormatException e) {
+				currentPageNo = 1;
+			}
+		} // end of 페이지 번호 장난 막기 ----------
+
+		// 가져올 게시글의 범위 구하기
+		startRno = ((currentPageNo - 1) * sizePerPage) + 1;
+		endRno = startRno + sizePerPage - 1;
+		optMap.put("startRno", startRno);
+		optMap.put("endRno", endRno);
+		System.out.println("startRno: "+startRno);
+		System.out.println("endRno: "+endRno);
 		
 		// DB로 가자 //
-		List<AccVO> accList = service.getAccList(optMap); // 검색어 포함 상품목록
-		List<HashMap<String, String>> regionList =  service.getRegionList(); // 지역명
+		List<AccVO> accList = service.getAccList(optMap); // 검색어 (미)포함 상품목록
 		List<HashMap<String, Object>> accGradeCntList = service.getAccGradeCnt(optMap); // 호텔 등급별 개수
 		List<HashMap<String, Object>> accTypeCntList = service.getAccTypeCnt(optMap); // 호텔 타입별 개수
+		List<HashMap<String, Object>> tagList = service.getTagList(); // 태그 클라우드 용
 		
 		
+		
+		// 페이지 번호 리스트 만듦
+		int loop = 1;
+		int prev = 0;
+		int next = 0;
+		int pageNo = ((currentPageNo - 1)/blockSize) * blockSize + 1; // 페이지 번호
+		List<Integer> pageNoList = new ArrayList<Integer>();
+		System.out.println("반복문 들어가기 전 페이지 숫자(pageNo): "+pageNo);
+		
+		// 이전
+		if(pageNo != 1) {
+			prev = pageNo-1;
+		}
+
+		// 일반 페이지 번호들
+		while( !(loop>blockSize || pageNo>totalPage) ) {
+			pageNoList.add(pageNo);
+			loop++;
+			pageNo++;
+			System.out.println("반복문 안 페이지 숫자(pageNo): "+pageNo);
+		}// end of while-----------
+		
+		// 다음
+		if(!(pageNo>totalPage)) {
+			next = pageNo;
+		}
+		System.out.println("결과적으로 나온 페이지 숫자(pageNo): "+pageNo);
+		
+		
+		for(int i : pageNoList) {
+			System.out.println("페이지 리스트: "+i);
+		}
 		
 		// 뷰단에 보내자 //
 		// 헤더 관련
@@ -220,19 +295,29 @@ public class AccommodationController {
 		mv.addObject("cloudyRegionAjax", cloudyRegionAjax);
 		mv.addObject("badRegionAjax", badRegionAjax);
 		mv.addObject("blendWeatherDaysOpt", blendWeatherDaysOpt);
-		mv.addObject("acc_gradeArr", acc_gradeArr);
 		mv.addObject("acc_typeArr", acc_typeArr);
+		mv.addObject("acc_gradeArr", acc_gradeArr);
 		
 		// 날씨 이미지 관련
 		mv.addObject("sunnyRegionArr", sunnyRegionArr);
 		mv.addObject("cloudyRegionArr", cloudyRegionArr);
 		mv.addObject("badRegionArr", badRegionArr);
 
+		// 페이지바 관련
+		mv.addObject("prev", prev);
+		mv.addObject("next", next);
+		mv.addObject("pageNoList", pageNoList);
+		mv.addObject("currentPageNo", currentPageNo);
+		
 		// 리스트
 		mv.addObject("accList", accList);
-		mv.addObject("regionList", regionList);
 		mv.addObject("accGradeCntList", accGradeCntList);
 		mv.addObject("accTypeCntList", accTypeCntList);
+		mv.addObject("tagList", tagList);
+
+		// 뭔지 모르지만 일단 냅둠.
+		String gobackURL = MyUtil.getCurrentURL(request);
+		mv.addObject("gobackURL", gobackURL);
 
 		mv.setViewName("accommodation/accommodation.tiles1");
 		// 위치: /FinalProjectC/src/main/webapp/WEB-INF/views/tiles1/accommodation/accommodation.jsp
@@ -257,12 +342,8 @@ public class AccommodationController {
 	/// #y4. 중기예보 날씨정보를 api로 받아옴: '도'별로만 예보가 뜸.  ///
 	@RequestMapping(value="/accommodation/kLongWeatherXML.we", method= {RequestMethod.GET})
 	public String weatherApi(HttpServletRequest request) {
-		
-		/*int[] observeArr = new int[205];
-		for(int i=89, j=0; i<observeArr.length; i++) {
-			observeArr[j] = i+1;
-			System.out.println(observeArr[j]);
-		}*/
+
+		String regid = request.getParameter("regid");
 		
 		// 값으로 넣어줄 날짜 뽑아야 됨
 		Calendar cal = Calendar.getInstance();
@@ -275,29 +356,24 @@ public class AccommodationController {
 		String str_month = String.valueOf(month);
 		String str_day = String.valueOf(day);
 		
-		if( str_month.length() != 2  ) {
+		if( str_month.length() != 2  )
 			str_month = "0"+str_month;
-		}
-		if( str_day.length() != 2  ) {
+		if( str_day.length() != 2  )
 			str_day = "0"+str_day;
-		}
-		
 		
 		String str_hour = "";
-		
-		if( 6 < hour && hour < 18) {
+		if( 6 < hour && hour < 18)
 			str_hour = "0600";
-		}
-		if( 18 < hour ) {
+		if( 18 < hour )
 			str_hour = "1800";
-		}
 		if(hour < 6) {
 			str_day = String.valueOf(cal.get(Calendar.DAY_OF_MONTH)-1);
 			str_hour = "1800";
 		}
 		
-		System.out.println(str_year+str_month+str_day+str_hour);
+		// System.out.println(str_year+str_month+str_day+str_hour);
 		
+		request.setAttribute("regid", regid);
 		request.setAttribute("tmFc", str_year+str_month+str_day+str_hour);
 		
 		return "api/kLongWeatherXML";
@@ -305,6 +381,86 @@ public class AccommodationController {
 	} // end of 호텔 리스트 뜨자마자 날씨api로 정보 받아옴 ------------
 
 
+	
+	// #y5. 검색어 자동 완성3
+	@RequestMapping(value="/accommodation/autoSearchWord.we", method= {RequestMethod.GET}, produces="text/plain;charset=UTF-8")
+	@ResponseBody
+	public String wordSearchShow(HttpServletRequest request) {
+		
+		String blendSearchWordAjax = request.getParameter("blendSearchWordAjax");
+		/*System.out.println("검색어 자동완성 컨트롤러 왔음: "+blendSearchWordAjax);*/
+		
+		HashMap<String, String> ajaxMap = new HashMap<String, String>();
+		ajaxMap.put("blendSearchWordAjax", blendSearchWordAjax);
+		// 주의!! 만약 매퍼에서 if문을 사용하고, 그 안에 들어갈 값으로 String 타입을 보낼 경우 에러남.
+		// String의 경우는 getter 메소드가 없기 때문에, 파라미터 인자로 String을 그대로 보내면 에러가 난다는 듯.
+		
+		List<AccVO> accAddrNameList = service.autoSearchWord(ajaxMap); // 호텔주소 & 호텔이름 뽑아옴.
+		List<HashMap<String, String>> accRegionList = service.getRegionList(ajaxMap); // 호텔 위치한 지역 뽑아옴.
+		
+		JSONArray jsonArr = new JSONArray();
+
+		if(accAddrNameList != null) {
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("accAddrNameList", accAddrNameList);
+			jsonArr.put(jsonObj);
+		}
+		if(accRegionList != null) {
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("accRegionList", accRegionList);
+			jsonArr.put(jsonObj);
+			for(HashMap<String, String> map : accRegionList) { System.out.println("짧은 지역 들어갔니?"+map.get("region_name")); }
+			for(HashMap<String, String> map : accRegionList) { System.out.println("긴 지역 들어갔니?"+map.get("region_shortName")); }
+		}
+		
+		String result = jsonArr.toString();
+		return result;
+		
+	} // end of 검색어 자동 완성 ------------------
+	
+	
+	
+	
+	
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// 결제관련: 영진이랑 합칠 때 동일 컨트롤러에 넣어야 함.
+	
+	// #y6. 결제
+	@RequestMapping(value="/payment.we", method= {RequestMethod.GET}) // 이거 나중에 POST로 바꿀 것!!
+	public ModelAndView payment(ModelAndView mv, HttpServletRequest request) {
+		
+		// 상세 페이지에서 넘어온 값을 받아옴.
+		String book_start = "2019.10.01"; // request.getParameter("book_start");
+		String book_end = "2019.10.03"; // request.getParameter("book_end");
+		String p_name = "김명진"; // request.getParameter("p_name");
+		String p_userid = "admin"; // request.getParameter("p_name");
+		String p_email = "뭔가_이메일@이메일"; // request.getParameter("p_email");
+		String accPrice = "899000"; // request.getParameter("accPrice");
+		
+		
+		
+		
+		mv.addObject("book_start", book_start);
+		mv.addObject("book_end", book_end);
+		mv.addObject("p_name", p_name);
+		mv.addObject("p_userid", p_userid);
+		mv.addObject("p_email", p_email);
+		mv.addObject("accPrice", accPrice);
+		
+		mv.setViewName("wetre/payment.tiles1");
+		return mv;
+		
+	} // end of 검색어 자동 완성 ------------------
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
