@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ page language="java" import="java.net.InetAddress" %>
+
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
@@ -7,12 +9,27 @@
 
 <% String ctxPath = request.getContextPath(); %>
 
+<%
+		// #172. (웹채팅관련3-2)
+		InetAddress inet = InetAddress.getLocalHost();
+		String serverIP = "192.168.50.40"; // String serverIP = inet.getHostAddress(); vpn이 너무 느려서 안 됨.
+		int portnumber = request.getServerPort();
+		String serverName = "http://"+serverIP+":"+portnumber;
+%>
+
+
 <%-- 날짜선택 달력 관련 --%>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 <%-- 가격바 스타일 관련 추가 --%>
 <link rel="stylesheet" href="<%= ctxPath%>/resources/css/chy_style.css">
+
+<style type="text/css">
+	*:focus {
+    	outline: none;
+	}
+</style>
 
 <script type="text/javascript">
 
@@ -257,9 +274,24 @@
  	    $("[name='acc_type']").click(function(){
 	    	goBlendedSearch();
 	    }); // end of 호텔 종류 변경 시 통합검색 보냄 ----------
+
 	    
 	    
-	}); // end of document ready -----------------
+	    
+	    /// 실시간 채팅 이벤트 통제 ///
+		$(".realTimeChat").click(function(){
+			var url = "<%= serverName%><%= request.getContextPath()%>/realTimeChat.we";
+			window.open(url, "Payment", "left=350px, top=100px, width=400px, height=520px");
+		}); // end of 실시간 채팅 이벤트 --------------
+
+		
+		
+		/// 태그 클라우드 ///
+		loopUpdateTagCloud();
+		
+		
+		
+	}); // end of document ready ----------------------------------------------------------------
 
 	
 	
@@ -268,7 +300,6 @@
 	function goBlendedSearch(idx) {
 		if(idx != null && idx != "") {
 			var frm = document.blendedSearchFrm;
-			frm.
 			frm.method = "GET";
 			frm.action = "<%= ctxPath%>/accommodation/accView.we?acc_idx="+idx;
 			frm.submit();
@@ -289,8 +320,8 @@
 		
 		var check = true;
 		
-    	console.log("날씨기간: "+$("#blendWeatherDaysOpt").val());
-    	console.log("날씨종류: "+$("#blendWeatherOpt").val());
+    	// console.log("날씨기간: "+$("#blendWeatherDaysOpt").val());
+    	// console.log("날씨종류: "+$("#blendWeatherOpt").val());
     	
     	// 예보기간 선택했는데, 날씨 선택 안 했으면 경고함.
     	if( ($("#blendWeatherDaysOpt").val() != "" && $("#blendWeatherDaysOpt").val() != null) &&
@@ -592,18 +623,14 @@
 		var nthWeather = "";
 
 		// 날씨에 맞는 변수에 지역명을 넣어주자
-		if( wf3Pm.indexOf("맑음") != -1 ) {
+		if( wf3Pm.indexOf("맑음") != -1 )
 			sunnyWeather += regId+",";
-		}
-		else if( wf3Pm.indexOf("흐림") != -1 || wf3Pm.indexOf("구름많음") != -1 || wf3Pm.indexOf("구름조금") != -1 ) {
+		else if( wf3Pm.indexOf("흐림") != -1 || wf3Pm.indexOf("구름많음") != -1 || wf3Pm.indexOf("구름조금") != -1 )
 			cloudyWeather += regId+",";
-		}
-		else if ( wf3Pm.indexOf("비") != -1 || wf3Pm.indexOf("박무") != -1 || wf3Pm.indexOf("안개") != -1 || wf3Pm.indexOf("천둥번개") != -1 ) {
+		else if ( wf3Pm.indexOf("비") != -1 || wf3Pm.indexOf("박무") != -1 || wf3Pm.indexOf("안개") != -1 || wf3Pm.indexOf("천둥번개") != -1 )
 			badWeather += regId+",";
-		}
-		else {
+		else
 			nthWeather += regId+",";
-		}
 
 		var weatherArray = [sunnyWeather,cloudyWeather,badWeather];
 		
@@ -613,10 +640,54 @@
 	
 	
 	
-	// 숫자 세자리마다 콤마 함수 //
-	function numberCom(x) {
-		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-	}
+	
+	/// 태그 클라우드 1분마다 호출하는 함수 ///
+	function loopUpdateTagCloud() {
+		tagCloud();
+		setTimeout(function(){loopUpdateTagCloud();},10000);
+	} // end of 태그 클라우드 반복호출 ------
+	
+	
+	/// 태그 클라우드 제이쿼리 함수 ///
+	function tagCloud() {
+		
+		$.ajax({
+			url: "<%= ctxPath%>/accommodation/tagCloud.we",
+			dataType: "JSON",
+			success: function(jsonArr){
+
+				$(".tagCloudList").slideUp(1200);
+				$(".tagCloudList").empty();
+
+				if(jsonArr.length > 0){
+	
+					$.each(jsonArr, function(tagListIndex, tagListItem){
+
+						var tagList = tagListItem.tagList;
+						var html = "";
+						
+						if(tagList != null) {
+							
+							$.each(tagList, function(tagIndex, tagItem){
+								html = "<li>"
+									 + "<a style='cursor: pointer;'"+'onclick="goBlendedSearch('+"'"+tagItem.acc_idx+"'"+');">'+tagItem.acc_name+'</a>'
+									 + "</li>";
+								console.log("갱신 되나?");
+								$(".tagCloudList").append(html);
+							}); // end of each -------------
+							
+							$(".tagCloudList").delay(1000).slideDown(1200);
+						}
+					});
+					
+				} // end of if -------
+			},
+			error: function(request, status, error){
+				alert("code: "+request.status+"\n"+"message: "+request.responseText+"\n"+"error: "+error);
+			}
+		});
+
+	} // end of 뉴스테이블 --------
 
 		
 	
@@ -1049,17 +1120,32 @@
 
 
 
-<%-- ************* 태그 클라우드(ajax로 바꿔야 됨) *************************** --%>
-                        <aside class="single-sidebar-widget tag_cloud_widget">
-                            <h4 class="widget_title">the Best of Now</h4>
-                            <ul class="list">
+<%-- ************* 태그 클라우드 *************************** --%>
+                        <aside class="single-sidebar-widget tag_cloud_widget" style="height: 220px;">
+                            <h4 class="widget_title">Real-Time View Rank</h4>
+                            <ul class="list tagCloudList">
 	                            <c:forEach var="tagMap" items="${tagList}">
 	                                <li><a style="cursor: pointer;" onclick="goBlendedSearch('${tagMap.acc_idx}');">${tagMap.acc_name}</a></li>
 	                            </c:forEach>
                             </ul>
                         </aside>
+                        <div class="br"></div>
 <%-- ************* 태그 클라우드 *************************** --%>
 
+
+<%-- =================== 채팅 관련 --%>
+						<aside class="single_sidebar_widget author_widget chat_group" style="height: 380px;">
+                            <img class="author_img rounded-circle" src="<%= ctxPath%>/resources/img/blog/author.png" alt="">
+                            <h4>실시간 문의</h4>
+                            <p>이하의 아이콘을 클릭해주세요.</p>
+                            <div class="social_icon">
+                                <a class="realTimeChat" style="cursor: pointer;"><i class="fa fa-behance"></i></a>
+								<%-- 위트리봇 --%>
+		                        <script id="embeddedChatbot" data-botId="B1r6ng" src="https://www.closer.ai/js/webchat.min.js"> </script>
+                            </div>
+                            <p>실시간 채팅으로 상담원에게 문의하실 수 있습니다. (평일 10:00-17:00, 주말 및 공휴일 제외)<br/>상담원이 부재중이라면, 위트리봇을 이용해보세요!</p>
+                        </aside>
+<%-- =================== 채팅 관련 ======================== --%>
                     </div>
                 </div>
                 

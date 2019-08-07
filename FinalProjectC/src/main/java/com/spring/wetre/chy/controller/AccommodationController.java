@@ -3,6 +3,8 @@ package com.spring.wetre.chy.controller;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -239,8 +241,6 @@ public class AccommodationController {
 		List<AccVO> accList = service.getAccList(optMap); // 검색어 (미)포함 상품목록
 		List<HashMap<String, Object>> accGradeCntList = service.getAccGradeCnt(optMap); // 호텔 등급별 개수
 		List<HashMap<String, Object>> accTypeCntList = service.getAccTypeCnt(optMap); // 호텔 타입별 개수
-		List<HashMap<String, Object>> tagList = service.getTagList(); // 태그 클라우드 용
-		
 		
 		
 		// 페이지 번호 리스트 만듦
@@ -277,10 +277,8 @@ public class AccommodationController {
 		
 		// 뷰단에 보내자 //
 		// 헤더 관련
-		mv.addObject("menuname", "Accommodation"); // 헤더에 메뉴 이름 뜨게 하는거
-		mv.addObject("pagename", "Search List"); // 헤더에 메뉴 이름 뜨게 하는거
-		mv.addObject("menulink", request.getContextPath()+"/accommodation/accList.we"); // 헤더에 메뉴에 링크 주는거
-		mv.addObject("pagelink", "link"); // 헤더에 메뉴에 링크 주는거
+		mv.addObject("pagename", "Accommodation"); // 헤더에 메뉴 이름 뜨게 하는거
+		mv.addObject("pagelink", request.getContextPath()+"/accommodation/accList.we"); // 헤더에 메뉴에 링크 주는거
 		
 		// 옵션 유지 관련
 		mv.addObject("blendSearchWord", blendSearchWord);
@@ -313,7 +311,6 @@ public class AccommodationController {
 		mv.addObject("accList", accList);
 		mv.addObject("accGradeCntList", accGradeCntList);
 		mv.addObject("accTypeCntList", accTypeCntList);
-		mv.addObject("tagList", tagList);
 
 		// 뭔지 모르지만 일단 냅둠.
 		String gobackURL = MyUtil.getCurrentURL(request);
@@ -378,7 +375,7 @@ public class AccommodationController {
 		
 		return "api/kLongWeatherXML";
 		
-	} // end of 호텔 리스트 뜨자마자 날씨api로 정보 받아옴 ------------
+	} // end of 중기예보 날씨정보를 api로 받아옴: '도'별로만 예보가 뜸. ------------
 
 
 	
@@ -409,8 +406,6 @@ public class AccommodationController {
 			JSONObject jsonObj = new JSONObject();
 			jsonObj.put("accRegionList", accRegionList);
 			jsonArr.put(jsonObj);
-			for(HashMap<String, String> map : accRegionList) { System.out.println("짧은 지역 들어갔니?"+map.get("region_name")); }
-			for(HashMap<String, String> map : accRegionList) { System.out.println("긴 지역 들어갔니?"+map.get("region_shortName")); }
 		}
 		
 		String result = jsonArr.toString();
@@ -420,6 +415,67 @@ public class AccommodationController {
 	
 	
 	
+	// #y9. 실시간 채팅 창 띄우기
+	@RequestMapping(value="/realTimeChat.we", method= {RequestMethod.GET})
+	public String realTimeChat() {
+
+		return "realTimeChat";
+		
+	} // end of 실시간 채팅 -------------
+	
+	
+	
+	// #y10. 태그 클라우드 ajax
+	@RequestMapping(value="/accommodation/tagCloud.we", method= {RequestMethod.GET}, produces="text/plain;charset=UTF-8")
+	@ResponseBody
+	public String tagCloud() {
+
+		List<HashMap<String, Object>> tagList = service.getTagList();
+		
+		JSONArray jsonArr = new JSONArray();
+
+		if(tagList != null) {
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("tagList", tagList);
+			jsonArr.put(jsonObj);
+		}
+
+		String result = jsonArr.toString();
+		return result;
+		
+	} // end of 실시간 채팅 -------------
+	
+	
+	
+	
+/*	// #y11. 챗봇한테 보내줄 JSON 파일
+	@RequestMapping(value="/accommodation/chatBot.we", method= {RequestMethod.GET}, produces="text/plain;charset=UTF-8")
+	@ResponseBody
+	public ModelAndView chatBot(HttpServletRequest request, ModelAndView mv) {
+
+		String botRequest = request.getParameter("botRequest");
+		System.out.println("리퀘스트 왓니?: "+botRequest);
+		
+		String result = "";
+		if("3".equals(botRequest)) { 
+		
+			// 3. 지금 가장 핫한 호텔/리조트
+			List<HashMap<String, Object>> tagList = service.getTagList();
+			
+			if(tagList != null) {
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("tagList", tagList);
+				result = jsonObj.toString();
+			}			
+		} // end of 지금 가장 핫한 호텔/리조트 ------
+		
+		mv.addObject("result", result);
+		mv.setViewName("api/chatBotJSON");
+		
+		return mv;
+		
+	} // end of 실시간 채팅 -------------
+*/	
 	
 	
 	
@@ -427,32 +483,224 @@ public class AccommodationController {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 결제관련: 영진이랑 합칠 때 동일 컨트롤러에 넣어야 함.
 	
-	// #y6. 결제
+	// #y6. 결제 페이지 띄우기
 	@RequestMapping(value="/payment.we", method= {RequestMethod.GET}) // 이거 나중에 POST로 바꿀 것!!
-	public ModelAndView payment(ModelAndView mv, HttpServletRequest request) {
+	public ModelAndView requirePrivateLogin_payment(HttpServletRequest request, HttpServletResponse response,ModelAndView mv) {
 		
 		// 상세 페이지에서 넘어온 값을 받아옴.
-		String book_start = "2019.10.01"; // request.getParameter("book_start");
-		String book_end = "2019.10.03"; // request.getParameter("book_end");
-		String p_name = "김명진"; // request.getParameter("p_name");
-		String p_userid = "admin"; // request.getParameter("p_name");
-		String p_email = "뭔가_이메일@이메일"; // request.getParameter("p_email");
-		String accPrice = "899000"; // request.getParameter("accPrice");
+		String acc_name = request.getParameter("acc_name");
+		String acc_grade = request.getParameter("acc_grade");
+		String rtype_name = request.getParameter("rtype_name");
+		String rtype_cnt = request.getParameter("rtype_cnt");
+		String acc_addr1 = request.getParameter("acc_addr1");
+		String acc_addr2 = request.getParameter("acc_addr2");
+		String acc_tel1 = request.getParameter("acc_tel1");
+		String acc_tel2 = request.getParameter("acc_tel2");
+		String acc_tel3 = request.getParameter("acc_tel3");
+		String r_idx = request.getParameter("r_idx");
+		String rtype_idx = request.getParameter("rtype_idx");
+		String book_start = request.getParameter("book_start");
+		String book_end = request.getParameter("book_end");
+		String accPrice = request.getParameter("accPrice");
+		String adultNum = request.getParameter("adultNum");
+		String kidsNum = request.getParameter("kidsNum");
+		
+		// 유저 정보는 세션에 있는거 받아오자
+		HttpSession session = request.getSession();
+		PersonalVO loginuser = (PersonalVO) session.getAttribute("loginuser");
+		String p_name = loginuser.getP_name();
+		String p_userid = loginuser.getP_userid();
+		int idx = loginuser.getIdx();
 		
 		
 		
-		
+		// 뷰단에 보내자
+		mv.addObject("acc_name", acc_name);
+		mv.addObject("acc_grade", acc_grade);
+		mv.addObject("rtype_name", rtype_name);
+		mv.addObject("rtype_cnt", rtype_cnt);
+		mv.addObject("acc_addr1", acc_addr1);
+		mv.addObject("acc_addr2", acc_addr2);
+		mv.addObject("acc_tel1", acc_tel1);
+		mv.addObject("acc_tel2", acc_tel2);
+		mv.addObject("acc_tel3", acc_tel3);
+		mv.addObject("r_idx", r_idx);
+		mv.addObject("rtype_idx", rtype_idx);
 		mv.addObject("book_start", book_start);
 		mv.addObject("book_end", book_end);
+		mv.addObject("accPrice", accPrice);
+		mv.addObject("adultNum", adultNum);
+		mv.addObject("kidsNum", kidsNum);
 		mv.addObject("p_name", p_name);
 		mv.addObject("p_userid", p_userid);
-		mv.addObject("p_email", p_email);
-		mv.addObject("accPrice", accPrice);
+		mv.addObject("idx", idx);
+
+
+		// 타이틀 관련
+		mv.addObject("pagename", "Payment");
 		
-		mv.setViewName("wetre/payment.tiles1");
+		mv.setViewName("personal/payment.tiles1");
+		// 파일위치: /FinalProjectC/src/main/webapp/WEB-INF/views/tiles1/personal/payment.jsp
+		
 		return mv;
 		
-	} // end of 검색어 자동 완성 ------------------
+	} // end of 결제 페이지 띄움 ------------------
+
+	
+	// #y7. 결제: 아임포트
+	@RequestMapping(value="/paymentEnd.we", method= {RequestMethod.POST})
+	public ModelAndView requirePrivateLogin_paymentEnd(HttpServletRequest request, HttpServletResponse response,ModelAndView mv) {
+		
+		// 유저 정보 확인 //
+		String idx = request.getParameter("idx");
+		if(idx == null) idx = "";
+		
+		HttpSession session = request.getSession();
+		PersonalVO loginuser = (PersonalVO) session.getAttribute("loginuser");
+		
+		// 로그인은 했는데, idx가 로그인 정보랑 일치하지 않을 경우
+		if( !idx.equals(String.valueOf(loginuser.getIdx())) ) {
+			String msg = "다른 사람 계정으로 결제할 순 없어!";
+			String loc = "javascript:history.back()";
+
+			request.setAttribute("msg", msg);
+			request.setAttribute("loc", loc);
+			
+			mv.setViewName("msg");
+		}
+		// 로그인 했고, idx가 로그인 정보랑 일치할 경우
+		else {
+			
+			// 뷰단에서 값 받아옴.
+			String fk_acc_name = request.getParameter("fk_acc_name");
+			String fk_rtype_name = request.getParameter("fk_rtype_name");
+			String cart_cnt = request.getParameter("cart_cnt");
+			String full_acc_addr = request.getParameter("full_acc_addr");
+			String full_acc_tel = request.getParameter("full_acc_tel");
+			String r_idx = request.getParameter("r_idx");
+			String rtype_idx = request.getParameter("rtype_idx");
+			String book_start = request.getParameter("book_start");
+			String book_end = request.getParameter("book_end");
+			String reserver = request.getParameter("reserver");
+			String contactInfo = request.getParameter("contactInfo");
+			String cart_price = request.getParameter("cart_price");
+			String requestTxt = request.getParameter("requestTxt");
+			String expectedTime = request.getParameter("expectedTime");
+			String payMethod = request.getParameter("payMethod");
+			String adultNum = request.getParameter("adultNum");
+			String kidsNum = request.getParameter("kidsNum");			
+			
+			// 유저가 직접 입력하는 부분은 공격 막기
+			reserver = MyUtil.replaceParameter(reserver);
+			requestTxt = MyUtil.replaceParameter(requestTxt);
+			
+			
+			// 아임포트에 꽂아주자			
+			// 유저정보
+			request.setAttribute("p_userid", loginuser.getP_userid());
+			request.setAttribute("p_name", loginuser.getP_name());
+			request.setAttribute("idx", idx);
+
+			// 예약 정보
+			request.setAttribute("fk_acc_name", fk_acc_name);
+			request.setAttribute("fk_rtype_name", fk_rtype_name);
+			request.setAttribute("cart_cnt", cart_cnt);
+			request.setAttribute("full_acc_addr", full_acc_addr);
+			request.setAttribute("full_acc_tel", full_acc_tel);
+			request.setAttribute("r_idx", r_idx);
+			request.setAttribute("rtype_idx", rtype_idx);
+			request.setAttribute("book_start", book_start);
+			request.setAttribute("book_end", book_end);
+			request.setAttribute("reserver", reserver);			
+			request.setAttribute("contactInfo", contactInfo);
+			request.setAttribute("cart_price", cart_price);
+			request.setAttribute("requestTxt", requestTxt);
+			request.setAttribute("expectedTime", expectedTime);
+			request.setAttribute("payMethod", payMethod);
+			request.setAttribute("adultNum", adultNum);
+			request.setAttribute("kidsNum", kidsNum);
+
+			mv.setViewName("paymentGateway"); // 아임포트 결제창: 타일즈 쓰면 안 됨.
+			// 파일위치: /FinalProjectC/src/main/webapp/WEB-INF/views/paymentGateway.jsp
+		}
+	
+		return mv;
+	} // end of 결제 페이지 띄움 ------------------
+	
+
+	
+	// #y8. 결제 후 유저 예약정보 테이블에 정보 넣기
+	@RequestMapping(value="/reserveInsert.we", method= {RequestMethod.POST}, produces="text/plain;charset=UTF-8")
+	@ResponseBody
+	public String requirePrivateLogin_reserveInsert(HttpServletRequest request, HttpServletResponse response, ModelAndView mv) {
+		
+		String result = "";
+		
+		try {	
+			
+			String p_userid = request.getParameter("p_userid");
+			String p_name = request.getParameter("p_name");
+			String fk_acc_name = request.getParameter("fk_acc_name");
+			String fk_rtype_name = request.getParameter("fk_rtype_name");
+			String cart_cnt = request.getParameter("cart_cnt");
+			String full_acc_addr = request.getParameter("full_acc_addr");
+			String full_acc_tel = request.getParameter("full_acc_tel");
+			String r_idx = request.getParameter("r_idx");
+			String rtype_idx = request.getParameter("rtype_idx");
+			String book_start = request.getParameter("book_start");
+			String book_end = request.getParameter("book_end");
+			String reserver = request.getParameter("reserver");
+			String contactInfo = request.getParameter("contactInfo");
+			String cart_price = request.getParameter("cart_price");
+			String requestTxt = request.getParameter("requestTxt");
+			String expectedTime = request.getParameter("expectedTime");
+			String payMethod = request.getParameter("payMethod");
+			String adultNum = request.getParameter("adultNum");
+			String kidsNum = request.getParameter("kidsNum");
+			
+			
+			HashMap<String, String> reserveMap = new HashMap<String, String>();
+			reserveMap.put("p_userid", p_userid);
+			reserveMap.put("p_name", p_name);
+			reserveMap.put("fk_acc_name", fk_acc_name);
+			reserveMap.put("fk_rtype_name", fk_rtype_name);
+			reserveMap.put("cart_cnt", cart_cnt);
+			reserveMap.put("full_acc_addr", full_acc_addr);
+			reserveMap.put("full_acc_tel", full_acc_tel);
+			reserveMap.put("r_idx", r_idx);
+			reserveMap.put("rtype_idx", rtype_idx);
+			reserveMap.put("book_start", book_start);
+			reserveMap.put("book_end", book_end);
+			reserveMap.put("reserver", reserver);
+			reserveMap.put("contactInfo", contactInfo);
+			reserveMap.put("cart_price", cart_price);
+			reserveMap.put("requestTxt", requestTxt);
+			reserveMap.put("expectedTime", expectedTime);
+			reserveMap.put("payMethod", payMethod);
+			reserveMap.put("adultNum", adultNum);
+			reserveMap.put("kidsNum", kidsNum);
+			
+			int reserveResult = service.insertReserveInfo(reserveMap);
+			
+			String msg = "";
+	
+			if(reserveResult == 0)
+				msg = "예약에 실패했어..관리자한테 문의해줘!";
+			else
+				msg = "예약 됐어!";
+	
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("msg", msg);
+			
+			result = jsonObj.toString();
+		
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+		
+		return result;
+		
+	} // end of 결제 후 유저 예약정보 테이블에 정보 넣기 ------------------
 	
 	
 	

@@ -227,5 +227,57 @@
 			order by region_code asc
 	</select>
 	
+
+	<!-- #y8-1. 총 방 개수 -->
+	<select id="getTotalRoomCnt" parameterType="HashMap" resultType="int">
+		select rtype_cnt
+		from room_type_tbl
+		where rtype_idx = #{rtype_idx}
+	</select>
+
+	<!-- #y8-1.방 종류 테이블에서 해당 방의 개수를 줄임. -->
+	<update id="minusRoomCnt" parameterType="HashMap">
+		update room_type_tbl set rtype_cnt = rtype_cnt - #{cart_cnt}
+		where rtype_idx = #{rtype_idx}
+	</update>
+
+
+	<!-- #y8-2. 특정 방의 정보가 예약 테이블에 있는지 없는지 확인 -->
+	<select id="getCheckBookInfo" parameterType="HashMap" resultType="int">
+		select count(*)
+		from booking_ck
+		where r_idx = #{r_idx}
+	</select>
+
+	<!-- #y8-2. 예약정보가 있을 경우, 특정 날짜에 예약이 가능한지를 확인 -->
+	<select id="getAvailableRoom" parameterType="HashMap" resultType="int">
+		select count(*)
+		from booking_ck
+		where r_idx = #{r_idx}
+		  and (book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+		  and (book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+	</select>
+
+	<!-- #y8-2. 예약 테이블에서 해당 방의 예약 날짜를 넣어줌. -->
+	<insert id="insertBookDays" parameterType="HashMap">
+		insert into booking_ck(r_idx, book_start, book_end)
+		values(#{r_idx}, TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS'), TO_DATE(#{book_end},'YYYY-MM-DD HH24:MI:SS'))
+	</insert>
+
+
+	<!-- #y8-3. 예약내용 저장 테이블에 해당 유저의 예약한 내용을 넣어줌. -->
+	<insert id="insertReserveInfo" parameterType="HashMap">
+		insert into cart_tbl( cartno, p_userid, r_idx, cart_price, cart_cnt, fk_acc_name, fk_rtype_name, full_acc_tel, reserver
+							, adultNum, kidsNum, contactInfo, payMethod, requestTxt, full_acc_addr, book_start, book_end, p_name, expectedTime )
+		values(seq_cart_tbl.nextval, #{p_userid}, #{r_idx}, #{cart_price}, #{cart_cnt}, #{fk_acc_name}, #{fk_rtype_name}, #{full_acc_tel}, #{reserver}
+			 , #{adultNum}, #{kidsNum}, #{contactInfo}, #{payMethod}, #{requestTxt}, #{full_acc_addr}
+			 , TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS'), TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'), #{p_name}, #{expectedTime})
+	</insert>
+
+
+
+
+
+
 	
 </mapper>

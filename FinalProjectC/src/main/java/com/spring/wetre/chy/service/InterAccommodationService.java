@@ -28,6 +28,9 @@ public interface InterAccommodationService {
 	// #y5. 호텔 위치한 지역 뽑아옴.
 	List<HashMap<String, String>> getRegionList(HashMap<String, String> ajaxMap);
 
+	// #y8. 결제 후 유저 장바구니(예약정보 넣는 곳) 테이블에 정보 넣기
+	int insertReserveInfo(HashMap<String, String> reserveMap) throws Throwable;
+
 
 
 
