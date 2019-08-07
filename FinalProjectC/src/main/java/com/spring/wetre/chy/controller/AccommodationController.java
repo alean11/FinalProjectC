@@ -706,7 +706,13 @@ public class AccommodationController {
 	
 	
 	
-	
+	// #y00. about us 페이지
+	@RequestMapping(value="/aboutus.we", method= {RequestMethod.GET})
+	public String aboutus() {
+
+		return "wetre/aboutus.tiles1";
+		
+	} // end of 실시간 채팅 -------------
 	
 	
 	

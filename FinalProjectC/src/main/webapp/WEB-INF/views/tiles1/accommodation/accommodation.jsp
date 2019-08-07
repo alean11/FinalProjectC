@@ -670,7 +670,7 @@
 							
 							$.each(tagList, function(tagIndex, tagItem){
 								html = "<li>"
-									 + "<a style='cursor: pointer;'"+'onclick="goBlendedSearch('+"'"+tagItem.acc_idx+"'"+');">'+tagItem.acc_name+'</a>'
+									 + "<a style='cursor: pointer;'"+'onclick="javascript:location.href='+"'<%= ctxPath%>/accommodation/accView.we?acc_idx="+tagItem.acc_idx+"'"+'">'+tagItem.acc_name+'</a>'
 									 + "</li>";
 								console.log("갱신 되나?");
 								$(".tagCloudList").append(html);
@@ -767,7 +767,7 @@
 											<p>
 												${accvo.acc_text}
 											</p>
-											<a class="primary-btn" onclick="goBlendedSearch('${accvo.acc_idx}');">Read More</a>
+											<a class="primary-btn" onclick="javascript:location.href='<%= ctxPath%>/accommodation/accView.we?acc_idx=${accvo.acc_idx}'">Read More</a>
 										</div>
 									</div>
 								</c:forEach>
@@ -1124,9 +1124,6 @@
                         <aside class="single-sidebar-widget tag_cloud_widget" style="height: 220px;">
                             <h4 class="widget_title">Real-Time View Rank</h4>
                             <ul class="list tagCloudList">
-	                            <c:forEach var="tagMap" items="${tagList}">
-	                                <li><a style="cursor: pointer;" onclick="goBlendedSearch('${tagMap.acc_idx}');">${tagMap.acc_name}</a></li>
-	                            </c:forEach>
                             </ul>
                         </aside>
                         <div class="br"></div>
