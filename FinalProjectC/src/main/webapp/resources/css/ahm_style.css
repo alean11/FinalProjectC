@@ -1,0 +1,70 @@
+@import '../css/jquery-ui.min.css';
+
+ .body h6 {
+ 	text-align: center;
+    font-weight: 400;
+    text-transform: uppercase;
+    background-image: -webkit-linear-gradient(left, #ff2f8b, #9035f9);
+    background-image: -moz-linear-gradient(left, #ff2f8b, #9035f9);
+    background-image: -ms-linear-gradient(left, #ff2f8b, #9035f9);
+    background-image: -o-linear-gradient(left, #ff2f8b, #9035f9);
+    background-image: linear-gradient(to right, #ff2f8b, #9035f9);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    margin: 0px;
+    letter-spacing: 1px; }
+    
+#searchWord {
+  width: 200px;
+  text-align: center;
+  padding: 5px 20px;
+  width: 40%;
+  border-radius: 10px; }    
+    
+#searchWord .form-control {
+    background: transparent;
+    border: 0;
+    color: #ffffff;
+    font-weight: 400;
+    font-size: 12px;
+    padding: 0; }
+    
+#searchWord .form-control:focus {
+  box-shadow: none;
+  outline: none; }
+
+#searchWord .button {
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0; }
+
+#searchWord .form-control.placeholder {
+	color: fff;
+}
+
+.page-link {
+	@extend .gradient-bg;
+	border-color: transparent;
+	color: #fff;
+}
+
+.bbtns { 
+	margin-top: 40px;
+	margin-bottom: 40px;
+	border: none;
+	background: -webkit-linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
+  	background: -moz-linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
+  	background: -ms-linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
+  	background: -o-linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
+  	background: linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);
+  	color: #fff;
+	font-size: 12px;
+	line-height: 38px;
+	display: inline-block;
+	font-weight: 500;
+	padding: 0px 10px 0px 10px;
+	border-radius: 0; }
+
+

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ==== #28. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ==== #29. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
+<mapper namespace="member">
+	
+	<!-- === 개인회원 로그인 처리하기 === -->
+	<select id="getLoginPrivateMember" parameterType="HashMap" resultType="com.spring.wetre.model.PersonalVO">
+		select idx, p_userid, p_name, p_email                                 
+			 , trunc( months_between(sysdate, p_lastlogin) ) AS lastlogindategap 
+			 , trunc( months_between(sysdate, p_lastpwdchg) ) AS pwdchangegap
+		from personal_mbr 
+		where p_status = 1 and p_userid = #{userid} and p_pwd = #{pwd}	
+	</select>
+	
+	
+	<update id="setLastPrivateMemberLoginDate" parameterType="HashMap">
+		update personal_mbr set p_lastlogin = sysdate
+		where p_userid = #{userid}
+	</update>
+	
+	
+	<!-- === 기업회원 로그인 처리하기 === -->
+	<select id="getLoginCompanyMember" parameterType="HashMap" resultType="com.spring.wetre.model.CompanyVO">
+		select idx, cp_id, cp_name, cp_email                                 
+		from company_mbr 
+		where status = 1 and cp_id = #{userid} and cp_pwd = #{pwd}	
+	</select>
+	
+
+	<select id="idCheckEndP" parameterType="HashMap" resultType="int">
+		select count(*)
+		from personal_mbr
+		where p_userid = #{p_userid}
+	</select>	
+	
+	<insert id="registerMemberP" parameterType="com.spring.wetre.model.PersonalVO"> 
+		insert into personal_mbr(idx,p_userid ,p_pwd,p_name,p_email,p_birthday
+		,p_gender,p_hp1,p_hp2,p_hp3,p_post,p_addr1,p_addr2
+		,p_registerday ,p_lastlogin,p_lastpwdchg,p_status)
+		values(seq_personal_mbr.nextval,#{p_userid}, #{p_pwd},#{p_name}
+		,#{p_email},#{p_birthday},#{p_gender},#{p_hp1},#{p_hp2},#{p_hp3}
+		,#{p_post},#{p_addr1},#{p_addr2},default,default,default,default)
+	</insert>
+	
+	<update id="updateMemberP" parameterType="com.spring.wetre.model.PersonalVO"> 
+		update personal_mbr set
+			p_pwd = #{p_pwd},
+			p_hp1 = #{p_hp1},
+			p_hp2 = #{p_hp2},
+			p_hp3 = #{p_hp3},
+			p_post = #{p_post},
+			p_addr1 = #{p_addr1},
+			p_addr2 = #{p_addr2},
+			p_lastpwdchg = sysdate
+		where p_userid = #{p_userid}
+	</update>
+	
+	<select id="selectPersonalInfo"  parameterType="String" resultType="com.spring.wetre.model.PersonalVO">
+		select idx,p_userid,p_pwd,p_name,p_email,p_birthday
+		,p_gender,p_hp1,p_hp2,p_hp3,p_post,p_addr1,p_addr2
+		,p_registerday
+		from personal_mbr
+		where p_userid = #{p_userid}
+	</select>	
+	
+	
+	
+	
+	
+	<!--  ////////////////////////// 기업회원 & 호텔 등록 ///////////////////// -->
+	<select id="isUseUserid" parameterType="String" resultType="int">
+		select count(*) 
+		from company_mbr
+		where cp_id = #{cp_id}
+	</select>
+	
+	
+	<insert id="registerMember" parameterType="com.spring.wetre.model.CompanyVO">
+	insert into company_mbr(idx, cp_id, cp_pwd, cp_num1, cp_num2, cp_num3, cp_name, ceoname, cp_email, cp_tel1, cp_tel2, cp_tel3, status)
+	 values(seq_company_mbr.nextval, #{cp_id}, #{cp_pwd}, #{cp_num1}, #{cp_num2}, #{cp_num3}, #{cp_name}, #{ceoname}, #{cp_email}, #{cp_tel1}, #{cp_tel2}, #{cp_tel3}, default)
+	
+	</insert>
+	
+	
+	<update id="updateMember" parameterType="com.spring.wetre.model.CompanyVO">
+		update company_mbr set cp_pwd = #{cp_pwd}, cp_num1 = #{cp_num1}, cp_num2 = #{cp_num2}, cp_num3 = #{cp_num3}, cp_name = #{cp_name}, ceoname = #{ceoname}, cp_email = #{cp_email}, cp_tel1 = #{cp_tel1}, cp_tel2 = #{cp_tel2}, cp_tel3 = #{cp_tel3} 
+		where  cp_id= 'gunhee1'
+	</update>
+	
+	<select id="selectUserInfo" parameterType="String" resultType="com.spring.wetre.model.CompanyVO" >
+		select *
+		from company_mbr
+		where cp_id = #{cp_id}
+	</select>
+
+	<insert id="registerHotel" parameterType="com.spring.wetre.model.AccVO">
+	insert into acc_tbl(acc_idx, cp_id, state, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_grade, acc_status , acc_type)
+	 values(seq_acc_tbl.nextval, #{cp_id}, 1, #{acc_name}, #{acc_tel1}, #{acc_tel2}, #{acc_tel3}, #{acc_post1}, #{acc_post2}, #{acc_addr1}, #{acc_addr2}, #{acc_img}, #{acc_text}, #{acc_Rcnt}, #{acc_grade}, default , #{acc_type})
+	</insert>
+		
+	<insert id= "insertImg" parameterType="com.spring.wetre.model.AddimgVO" >
+	 insert into addtional_img(ad_img1, ad_img2, ad_img3, ad_img4, ad_img5, acc_idx)
+		values(#{ad_img1}, #{ad_img2}, #{ad_img3}, #{ad_img4}, #{ad_img5}, #{acc_idx})
+	</insert>	
+	
+	
+	<select id="get_acc_idx" parameterType="com.spring.wetre.model.AccVO" resultType="int">
+		select acc_idx
+		from acc_tbl
+		where cp_id = #{cp_id} and  acc_name = #{acc_name} and acc_tel1 = #{acc_tel1} and acc_tel2 = #{acc_tel2} and acc_tel3 = #{acc_tel3} and acc_post1 = #{acc_post1} and acc_post2 = #{acc_post2} and acc_addr1 = #{acc_addr1} and acc_addr2 = #{acc_addr2} and acc_img = #{acc_img} and acc_text = #{acc_text} and acc_Rcnt = #{acc_Rcnt} and acc_grade = #{acc_grade} and acc_type = #{acc_type}
+	</select>
+	<select id="getHotelName" parameterType="String" resultType="com.spring.wetre.model.AccVO">
+		select *
+		from acc_tbl
+		where cp_id = #{cp_id}
+	</select>
+	
+	<select id="selectHotel" parameterType="String" resultType="com.spring.wetre.model.AccVO">
+		select acc_name, acc_tel1, acc_tel2, acc_tel3, acc_post1, acc_post2, acc_addr1, acc_addr2, acc_img, acc_text, acc_Rcnt, acc_type, acc_grade, acc_idx
+		from acc_tbl
+		where acc_idx = #{acc_idx}
+	</select>
+	
+	<update id="updateHotel" parameterType="com.spring.wetre.model.AccVO" >
+		update acc_tbl set acc_name = #{acc_name}, acc_tel1 = #{acc_tel1}, acc_tel2 = #{acc_tel2}, acc_tel3 = #{acc_tel3}, acc_post1 = #{acc_post1}, acc_post2 = #{acc_post2}, acc_addr1 = #{acc_addr1}, acc_addr2 = #{acc_addr2}, acc_img = #{acc_img}, acc_text = #{acc_text}, acc_Rcnt = #{acc_Rcnt} 
+		where acc_idx = #{acc_idx}
+	</update>
+
+
+	<insert id="registerRtype" parameterType="com.spring.wetre.model.RtypeVO" >
+	 insert into room_type_tbl(rtype_idx, FK_acc_idx, rtype_Name, rtype_cnt)
+	 values(seq_room_type_tbl.nextval, #{FK_acc_idx}, #{rtype_Name}, #{rtype_cnt})
+	</insert>
+	
+	<select id= "get_FK_rtype_idx" parameterType="com.spring.wetre.model.RtypeVO" resultType= "String">
+	select rtype_idx
+	from room_type_tbl
+	where FK_acc_idx = #{FK_acc_idx} and rtype_Name = #{rtype_Name} and rtype_cnt = #{rtype_cnt}
+	</select>
+	
+	<insert id= "registerRoom" parameterType="com.spring.wetre.model.RoomVO">
+	insert into room_tbl(r_idx, FK_acc_idx, FK_rtype_idx, r_text, ay_fee, k_fee)
+	values(seq_room_tbl.nextval, #{FK_acc_idx}, #{FK_rtype_idx}, #{r_text}, #{ay_fee}, #{k_fee})
+	</insert>
+	
+	<select id= "get_r_idx" parameterType="com.spring.wetre.model.RoomVO" resultType= "Int">
+	select r_idx
+	from room_tbl
+	where FK_acc_idx = #{FK_acc_idx} and FK_rtype_idx = #{FK_rtype_idx} and r_text = #{r_text} and ay_fee = #{ay_fee} and k_fee = #{k_fee}
+	</select>
+	
+	<insert id= "registerBar" parameterType="com.spring.wetre.model.BarmenityVO">
+	insert into barmenity(r_idx, bm_br_addfee, bm_amenity, bm_device)
+	values(#{r_idx}, #{bm_br_addfee}, #{bm_amenity}, #{bm_device})
+	</insert>
+	
+	
+	<update id="updateRtype" parameterType="com.spring.wetre.model.AccVO" >
+		update room_type_tbl set rtype_Name = #{rtype_Name}, rtype_cnt = #{rtype_cnt} 
+		where FK_acc_idx = #{FK_acc_idx}
+	</update>
+	
+	<update id="updateRoom" parameterType="com.spring.wetre.model.AccVO" >
+		update room_tbl set FK_rtype_idx = #{FK_rtype_idx}, r_text = #{r_text}, ay_fee = #{ay_fee}, k_fee = #{k_fee} 
+		where r_idx = #{r_idx}
+	</update>
+	
+	<update id="updateBar" parameterType="com.spring.wetre.model.AccVO" >
+		update barmenity set bm_br_addfee = #{bm_br_addfee}, bm_amenity = #{bm_amenity}, bm_device = #{bm_device} 
+		where r_idx = #{r_idx}
+	</update>
+	
+	
+	<select id="getR_idx" parameterType="int" resultType="int">
+		select r_idx
+		from room_tbl
+		where FK_acc_idx = #{acc_idx}
+	</select>
+	
+	<insert id="insertAcc_tag" parameterType="com.spring.wetre.model.AccVO">
+		insert into acc_tag(acc_idx, acc_name, cnt)
+		values(#{acc_idx}, #{acc_name}, DEFAULT)
+	</insert>
+	
+	<update id="updateAcc_tag" parameterType="com.spring.wetre.model.AccVO">
+		update acc_tag set acc_name = #{acc_name}
+		where acc_idx = #{acc_idx}
+	</update>
+	
+	
+</mapper>

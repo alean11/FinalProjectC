@@ -12,7 +12,8 @@
 <%
 		// #172. (웹채팅관련3-2)
 		InetAddress inet = InetAddress.getLocalHost();
-		String serverIP = "192.168.50.40"; // String serverIP = inet.getHostAddress(); vpn이 너무 느려서 안 됨.
+		String serverIP = inet.getHostAddress();
+	//	String serverIP = "192.168.50.53"; 
 		int portnumber = request.getServerPort();
 		String serverName = "http://"+serverIP+":"+portnumber;
 %>
@@ -81,7 +82,7 @@
 				data: search_data,
 				dataType: "JSON",
 				success: function(jsonArr){
-					
+										
 					// 검색어 자동 완성4
 					// 검색된 데이터가 있는 경우
 					if(jsonArr.length > 0){
@@ -162,20 +163,30 @@
 							} // end of if 지역명 뽑음-----
 						}); // end of each --------------
 						
- 						$(".searchWordListInner").html(longRegHtml+fullAddrHtml); // shorRegHtml+longRegHtml+
 						$(".searchWordListWrapper").show();
+						$(".searchWordListInner").show();
+ 						$(".searchWordListInner").html(longRegHtml+fullAddrHtml); // shorRegHtml+longRegHtml+
+
+ 						// 검색어를 지웠을 경우, 검색어 뜨는 부분을 가려줌.
+ 						if($("#blendSearchWord").val() == "" || $("#blendSearchWord").val() == null) {
+							$(".searchWordListWrapper").hide();
+							$(".searchWordListInner").hide();
+						}
 					}
 					// 검색된 데이터가 존재하지 않을 경우
 					else {
 						$(".searchWordListWrapper").hide();
+						$(".searchWordListInner").hide();
 					} // end of if ~ else ----------------
 				},
 				error: function(request, status, error){
 					alert("code: "+request.status+"\n"+"message: "+request.responseText+"\n"+"error: "+error);
 				}
-			}); // end of ajax --------
+			}); // end of ajax --------			
 			
 		}); // end of 자동글 완성 이벤트 -------------
+		
+		
 		
 		/// 검색어 자동 완성5: 검색어 클릭 시 input에 해당 검색어만 남기고, 검색어 결과는 숨김. ///
 		// 텍스트 길이가 일정 이상을 벗어나면, x자 숨기기. 그 이하면 x자 나타내기 하기.
@@ -192,8 +203,11 @@
 			else if($target.is(".thirdWord")) {
 				word = $target.prev().prev().text() + $target.prev().text() + $target.text();
 			}
+			
 			$("#blendSearchWord").val(word);
 			$(".searchWordListWrapper").hide();
+			$(".searchWordListInner").hide();
+			
 		}); // end of 검색어 닫기 ----------
 		
 		
@@ -227,12 +241,10 @@
 	    
 	    /// 예보기간 선택 이벤트 ///
 	    $("#blendWeatherDaysOpt").change(function(){
-	    	if($("#blendWeatherDaysOpt").val() == 0) {
+	    	if($("#blendWeatherDaysOpt").val() == 0)
 	    		receiveTodayWeather(); // 현재 날씨
-	    	}
-	    	if($("#blendWeatherDaysOpt").val() == 3) {
+	    	if($("#blendWeatherDaysOpt").val() == 3) 
 				receiveLongWeather(); // 3일 후 날씨
-	    	}
 	    }); // end of 예보기간 선택 이벤트 -------------
 	    
 	    
@@ -297,19 +309,11 @@
 	
 	
 	/// 통합검색 제출 함수 ///
-	function goBlendedSearch(idx) {
-		if(idx != null && idx != "") {
-			var frm = document.blendedSearchFrm;
-			frm.method = "GET";
-			frm.action = "<%= ctxPath%>/accommodation/accView.we?acc_idx="+idx;
-			frm.submit();
-		}
-		else {
-			var frm = document.blendedSearchFrm;
-			frm.method = "GET";
-			frm.action = "<%= ctxPath%>/accommodation/accList.we";
-			frm.submit();
-		}
+	function goBlendedSearch() {
+		var frm = document.blendedSearchFrm;
+		frm.method = "GET";
+		frm.action = "<%= ctxPath%>/accommodation/accList.we";
+		frm.submit();
 	} // end of 통합검색 ---------------
 	
 	
@@ -323,12 +327,12 @@
     	// console.log("날씨기간: "+$("#blendWeatherDaysOpt").val());
     	// console.log("날씨종류: "+$("#blendWeatherOpt").val());
     	
-    	// 예보기간 선택했는데, 날씨 선택 안 했으면 경고함.
+/*     	// 예보기간 선택했는데, 날씨 선택 안 했으면 경고함.
     	if( ($("#blendWeatherDaysOpt").val() != "" && $("#blendWeatherDaysOpt").val() != null) &&
     		($("#blendWeatherOpt").val() == "" || $("#blendWeatherOpt").val() == null) ) {
     		alert("날씨를 선택해줘!");
     		check = false;
-    	}
+    	} */
 		
     	// 날씨 선택했는데, 예보기간 선택 안 했으면 경고함.
     	if( ($("#blendWeatherOpt").val() != "" && $("#blendWeatherOpt").val() != null) &&
@@ -550,7 +554,8 @@
 				data: {"regid":regidArray[i]}, // 중부지방
 				dataType: "XML",
 				success: function(xml){
-	
+					
+					
 					////////////////////////////////////////////////////
 					/*var body = $(rootElement).find("body");
 					console.log($(body).prop("tagName"));   // body
@@ -838,7 +843,7 @@
                             <h3 style="margin-bottom: 50px;">Blended Search</h3>
                             <div style="margin-bottom: 20px;" class="input-group">
 	                            <div class="input-group">
-	                                <input type="text" id="blendSearchWord" name="blendSearchWord" class="form-control" placeholder="Where?">
+	                                <input type="text" id="blendSearchWord" name="blendSearchWord" value="" class="form-control" placeholder="Where?">
 	                                <span class="input-group-btn">
 	                                    <button class="btn btn-default" type="button"><i class="lnr lnr-cross"></i></button>
 	                                </span>
@@ -1133,10 +1138,10 @@
 <%-- =================== 채팅 관련 --%>
 						<aside class="single_sidebar_widget author_widget chat_group" style="height: 380px;">
                             <img class="author_img rounded-circle" src="<%= ctxPath%>/resources/img/blog/author.png" alt="">
-                            <h4>실시간 문의</h4>
-                            <p>이하의 아이콘을 클릭해주세요.</p>
+                            <h4>문의하기</h4>
                             <div class="social_icon">
-                                <a class="realTimeChat" style="cursor: pointer;"><i class="fa fa-behance"></i></a>
+                            	<a class="realTimeChat" style="padding: 5px 13px; margin-bottom: 8px; color: white; cursor: pointer;
+                            								   background: linear-gradient(90deg, #ff2f8b 0%, #9035f9 100%);">실시간 채팅</a>
 								<%-- 위트리봇 --%>
 		                        <script id="embeddedChatbot" data-botId="B1r6ng" src="https://www.closer.ai/js/webchat.min.js"> </script>
                             </div>
@@ -1149,7 +1154,6 @@
 		</div>
 	</div>
 </section>
-
 
 
 <%-- 가격바 슬라이드 관련 js --%>

@@ -116,7 +116,7 @@
 		    		<% }  %> /><br>
 				<input type="password" placeholder="password" name="password" id="password"><br>
 				<input type="button" value="Login" id="btnPrivateLogin"/>
-				<input type="button" value="Register" id="btnPrivateRegister" /><br/><br/>
+				<input type="button" value="Register" id="btnPrivateRegister" onclick="javascript:location.href='<%= request.getContextPath() %>/personalRegister.we'" /><br/><br/>
 				 <% 
 						if(flag == true) { %> 
 							<input type="checkbox" id="saveid" name="saveid" style="vertical-align: text-top;" checked /><label for="saveid" style="margin-right: 20px; vertical-align: middle; font-size: 11pt;">아이디저장</label>

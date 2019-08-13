@@ -23,29 +23,19 @@ $(document).ready(function () {
     var map;
     var elevator;
     var myOptions = {
-        zoom: 1,
-        center: {lat: 37.567957, lng: 126.983134},
+        zoom: 15,
+        center: {lat: 37.566535, lng: 126.97796919999996},
         
-        mapTypeId: 'roadmap'
         
     };
     map = new google.maps.Map(document.getElementById('map_canvas'), myOptions);
-    var addresses = [
-       // <c:set var="cnt" value="1" />
-       // <c:forEach var="storemapvo" items="${storemapList}" varStatus="status">               
-           ${accList.acc_addr1}     
-         //  <c:if test="${cnt < storemapList.size()}">
-           
-        //   </c:if>
-       //    <c:set var="cnt" value="${cnt + 1}" />  
-      //  </c:forEach>
-       ];
+    var addresses = "경상북도 경주시 보문로 484-7";
     // console.log(${storemapList.size()});
     /* var addresses = ['거제시', '통영시', '김해시','남해군','창원시']; */
 
     
-    for (var x = 0; x < addresses.length; x++) {
-        $.getJSON('https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyDDQx9Q_JsWUjWyssoeEaeBGSbhvGcTyrA&sensor=false&address='+addresses[x], null, function (data) {
+   
+        $.getJSON('https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyDDQx9Q_JsWUjWyssoeEaeBGSbhvGcTyrA&sensor=false&address='+addresses, null, function (data) {
             var p = data.results[0].geometry.location
             var latlng = new google.maps.LatLng(p.lat, p.lng);
             new google.maps.Marker({
@@ -54,7 +44,7 @@ $(document).ready(function () {
             });
 
         });
-    }
+    
 
 });
 </script>

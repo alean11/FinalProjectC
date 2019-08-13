@@ -1,5 +1,7 @@
 package com.spring.wetre.model;
 
+import org.springframework.web.multipart.MultipartFile;
+
 public class AccVO {
 
 	private int acc_idx;
@@ -20,18 +22,22 @@ public class AccVO {
 	private int acc_grade;
 	private String acc_text;
 	
+	// join 하면서 같이 받아와야해서
+	private RoomVO room;	// 방정보 객체.
 	
 	// 인라인뷰로 합치면서, 새로운 컬럼들 넣어줘야 해서 넣어줌.
 	private String region_name;
+	private String region_shortname;	
 	private int cnt;
+	
+	private MultipartFile attach;
 	
 	public AccVO() {}
 
-
 	public AccVO(int acc_idx, String cp_id, int state, String acc_name, String acc_tel1, String acc_tel2,
 			String acc_tel3, String acc_post1, String acc_post2, String acc_addr1, String acc_addr2, String acc_img,
-			int acc_Rcnt, int acc_status, String acc_type, int acc_grade, String acc_text, String region_name,
-			int cnt) {
+			int acc_Rcnt, int acc_status, String acc_type, int acc_grade, String acc_text, RoomVO room,
+			String region_name, String region_shortname, int cnt) {
 		super();
 		this.acc_idx = acc_idx;
 		this.cp_id = cp_id;
@@ -43,18 +49,18 @@ public class AccVO {
 		this.acc_post1 = acc_post1;
 		this.acc_post2 = acc_post2;
 		this.acc_addr1 = acc_addr1;
-		this.acc_addr2 = acc_addr2;
+		this.acc_addr2 = acc_addr2;	
 		this.acc_img = acc_img;
 		this.acc_Rcnt = acc_Rcnt;
 		this.acc_status = acc_status;
 		this.acc_type = acc_type;
 		this.acc_grade = acc_grade;
 		this.acc_text = acc_text;
+		this.room = room;
 		this.region_name = region_name;
+		this.region_shortname = region_shortname;
 		this.cnt = cnt;
 	}
-
-
 
 	public int getAcc_idx() {
 		return acc_idx;
@@ -152,22 +158,6 @@ public class AccVO {
 		this.acc_img = acc_img;
 	}
 
-	public String getAcc_text() {
-		return acc_text;
-	}
-
-	public void setAcc_text(String acc_text) {
-		this.acc_text = acc_text;
-	}
-	
-	public String getRegion_name() {
-		return region_name;
-	}
-
-	public void setRegion_name(String region_name) {
-		this.region_name = region_name;
-	}
-
 	public int getAcc_Rcnt() {
 		return acc_Rcnt;
 	}
@@ -184,6 +174,54 @@ public class AccVO {
 		this.acc_status = acc_status;
 	}
 
+	public String getAcc_type() {
+		return acc_type;
+	}
+
+	public void setAcc_type(String acc_type) {
+		this.acc_type = acc_type;
+	}
+
+	public int getAcc_grade() {
+		return acc_grade;
+	}
+
+	public void setAcc_grade(int acc_grade) {
+		this.acc_grade = acc_grade;
+	}
+
+	public String getAcc_text() {
+		return acc_text;
+	}
+
+	public void setAcc_text(String acc_text) {
+		this.acc_text = acc_text;
+	}
+
+	public RoomVO getRoom() {
+		return room;
+	}
+
+	public void setRoom(RoomVO room) {
+		this.room = room;
+	}
+
+	public String getRegion_name() {
+		return region_name;
+	}
+
+	public void setRegion_name(String region_name) {
+		this.region_name = region_name;
+	}
+
+	public String getRegion_shortname() {
+		return region_shortname;
+	}
+
+	public void setRegion_shortname(String region_shortname) {
+		this.region_shortname = region_shortname;
+	}
+
 	public int getCnt() {
 		return cnt;
 	}
@@ -192,26 +230,13 @@ public class AccVO {
 		this.cnt = cnt;
 	}
 
-
-	public String getAcc_type() {
-		return acc_type;
+	public MultipartFile getAttach() {
+		return attach;
 	}
 
-
-	public void setAcc_type(String acc_type) {
-		this.acc_type = acc_type;
+	public void setAttach(MultipartFile attach) {
+		this.attach = attach;
 	}
-
-
-	public int getAcc_grade() {
-		return acc_grade;
-	}
-
-
-	public void setAcc_grade(int acc_grade) {
-		this.acc_grade = acc_grade;
-	}
-	
 	
 	
 }

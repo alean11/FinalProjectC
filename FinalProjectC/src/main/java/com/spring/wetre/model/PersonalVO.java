@@ -12,24 +12,30 @@ public class PersonalVO {
 	private String p_hp1;
 	private String p_hp2;
 	private String p_hp3;
-	private String p_post1;
-	private String p_post2;
+	private String p_post;
 	private String p_addr1;
 	private String p_addr2;
 	private String p_registerday;
 	private String p_lastlogin;
 	private String p_lastpwdchg;
 	private int p_status;
+	
 
     /////////////////////////////////////////////////////////////////////////////////////
 	private boolean requirePwdChange = false; 
 	private boolean idleStatus = false;
 	private int lastlogindategap;   
-	private int pwdchangegap;       
-	public PersonalVO() {}
+	private int pwdchangegap;
+	
+	
+	public PersonalVO() {	}
+	
+	
 	public PersonalVO(int idx, String p_userid, String p_pwd, String p_name, String p_email, String p_birthday,
-			int p_gender, String p_hp1, String p_hp2, String p_hp3, String p_post1, String p_post2, String p_addr1,
-			String p_addr2, String p_registerday, String p_lastlogin, String p_lastpwdchg, int p_status) {
+			int p_gender, String p_hp1, String p_hp2, String p_hp3, String p_post, String p_addr1, String p_addr2,
+			String p_registerday, String p_lastlogin, String p_lastpwdchg, int p_status, boolean requirePwdChange,
+			boolean idleStatus, int lastlogindategap, int pwdchangegap) {
+		super();
 		this.idx = idx;
 		this.p_userid = p_userid;
 		this.p_pwd = p_pwd;
@@ -40,14 +46,17 @@ public class PersonalVO {
 		this.p_hp1 = p_hp1;
 		this.p_hp2 = p_hp2;
 		this.p_hp3 = p_hp3;
-		this.p_post1 = p_post1;
-		this.p_post2 = p_post2;
+		this.p_post = p_post;
 		this.p_addr1 = p_addr1;
 		this.p_addr2 = p_addr2;
 		this.p_registerday = p_registerday;
 		this.p_lastlogin = p_lastlogin;
 		this.p_lastpwdchg = p_lastpwdchg;
 		this.p_status = p_status;
+		this.requirePwdChange = requirePwdChange;
+		this.idleStatus = idleStatus;
+		this.lastlogindategap = lastlogindategap;
+		this.pwdchangegap = pwdchangegap;
 	}
 	public int getIdx() {
 		return idx;
@@ -109,17 +118,11 @@ public class PersonalVO {
 	public void setP_hp3(String p_hp3) {
 		this.p_hp3 = p_hp3;
 	}
-	public String getP_post1() {
-		return p_post1;
+	public String getP_post() {
+		return p_post;
 	}
-	public void setP_post1(String p_post1) {
-		this.p_post1 = p_post1;
-	}
-	public String getP_post2() {
-		return p_post2;
-	}
-	public void setP_post2(String p_post2) {
-		this.p_post2 = p_post2;
+	public void setP_post(String p_post) {
+		this.p_post = p_post;
 	}
 	public String getP_addr1() {
 		return p_addr1;
@@ -180,7 +183,8 @@ public class PersonalVO {
 	}
 	public void setPwdchangegap(int pwdchangegap) {
 		this.pwdchangegap = pwdchangegap;
-	}
+	}       
+
 	
 	
 	

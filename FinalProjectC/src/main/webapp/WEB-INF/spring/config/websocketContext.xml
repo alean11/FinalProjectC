@@ -11,7 +11,7 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
  
     
-    <beans:bean id="echoHandler" class="com.spring.common.WebsocketEchoHandler" init-method="init" />
+    <beans:bean id="echoHandler" class="com.spring.wetre.common.WebsocketEchoHandler" init-method="init" />
     <websocket:handlers>
         <websocket:mapping path="/realTimeChatStart.we" handler="echoHandler" />
         <websocket:handshake-interceptors>

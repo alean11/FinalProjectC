@@ -1,7 +1,27 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<style>
+ul.subMenu {
+    margin: 0;
+    padding: 0;
+}
+
+ul.subMenu li{ 
+	padding-right: 10px;
+ 	list-style : none;  
+ 	display : inline;
+    border-right: 1px solid gray;
+ 	width : 100%;
+ 	font-size: 30px;
+    margin-right: 10px;
+}
+ul.subMenu li:last-child{
+	margin-right: 0;
+}
 
 
+</style>
 
 
 <script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>
@@ -190,8 +210,19 @@
 	} // end of function goRegister(event)----------
 	
 	
-	
 </script>
+
+<div class="row">
+
+<div style="display: inline-block; margin: 40px auto;" >
+	<ul class="subMenu">
+				
+		<li> <a href="hrmp.we"> 호텔,객실 수정</a></li>
+		<li><a href="hrregister.we" >호텔 등록</a></li>
+	</ul>
+</div>
+
+</div>
 
 
         <!-- ****** 회원가입 Area Start ****** -->
@@ -202,7 +233,7 @@
                         <div class="checkout_details_area mt-50 clearfix">
 
                             <div class="cart-page-heading">
-                                <h5>회원수정</h5>
+                                <h5>기업회원 수정</h5>
                                 <p>Company Registration</p>
                             </div>
 

@@ -80,7 +80,8 @@
     	websocket.onopen = function() {
 
     		$("#chatMessage").text("소켓 연결 성공! 채팅 시작!");
-	    	
+            $("#chatMessage").append("<br/>");
+            
             messageObj = { message : "채팅방에 <span style='color: red;'>입장</span>했습니다"
         		     	 , type : "all"
         		     	 , to : "all" };
@@ -91,7 +92,7 @@
     	// === 메시지 수신 콜백함수
         websocket.onmessage = function(evt) {
             $("#chatMessage").append(evt.data);
-            $("#chatMessage").append("<br />");
+            $("#chatMessage").append("<br/>");
             $("#chatMessage").scrollTop(99999999);
         };
         

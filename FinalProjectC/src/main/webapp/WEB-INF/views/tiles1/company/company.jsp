@@ -48,7 +48,7 @@
 			// 팝업창 띄우기
 			var url = "idCheck.we";
 			window.open(url, "idcheck",
-					    "left=500px, top=100px, width=300px, height=230px"); // method 조건 없으므로, get방식임.			
+					    "left=500px, top=100px, width=470px, height=200px"); // method 조건 없으므로, get방식임.   
 		});// end of $("#idcheck").click()------------
 		
 		
@@ -297,18 +297,6 @@
                                     <div class="col-12 mb-3">
                                     	<span class="error error_cp">올바른 연락처 형식이 아닙니다.</span>
                                     </div>
-                                    
-                                    <!-- <div class="col-md-12 mb-3" style="margin: 0 !important;">
-                                  		<label for="gender">성별 <span>*</span></label>
-                                    </div>                  
-                                	<div class="custom-control custom-checkbox d-block mb-2"  style="margin: 0 30px 25px 15px !important;">
-                                            <input type="radio" class="custom-control-input" id="male" name="gender" value="1">
-                                            <label class="custom-control-label" for="male">남자</label>
-                                    </div>
-                                	<div class="custom-control custom-checkbox d-block mb-2"  style="margin: 0 30px 25px 15px !important;">
-                                            <input type="radio" class="custom-control-input" id="female" name="gender" value="2">
-                                            <label class="custom-control-label" for="female">여자</label>
-                                    </div> -->
                                     
                                     
                                     <iframe src="<%= request.getContextPath()%>/resources/agree/agree.html" width="85%" height="150px" class="box" style="margin: 15px 0px 15px 15px;"></iframe>

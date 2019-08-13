@@ -31,7 +31,7 @@ $(document).ready(function() {
 		pay_method : '${payMethod}',
 		merchant_uid : 'merchant_' + new Date().getTime(),
 		name : '결제테스트',
-		amount : '${cart_price}',
+		amount : '${cart_price}', // 100
 		buyer_email : email,
 		buyer_name : '${p_name}',
 		buyer_tel : hp,

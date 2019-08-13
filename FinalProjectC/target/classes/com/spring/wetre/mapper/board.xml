@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ==== #28. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- ==== #29. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) ==== -->
+<mapper namespace="board">
+
+
+	 
+	 <!-- === #129. 답변형 게시판의 글쓰기(파일첨부가 없는 글쓰기) === 
+	                  먼저 #56. 을 주석처리한 후 아래처럼 해야 한다. -->
+	 <insert id="addQnA" parameterType="com.spring.wetre.model.BoardVO"> 
+	 	<if test='fk_qna_seq.equals("")'>
+		 	insert into qna_tbl(qna_idx,p_userid,q_title,q_context,q_writeday,q_writer,q_viewcnt,q_pwd,status, groupno, fk_qna_seq, depthno)
+			values(seq_qna_tbl.nextval, #{p_userid},#{q_title},#{q_context},default,#{q_writer},default,#{q_pwd},default, #{groupno}, default, default)
+		</if>
+		
+		<if test='!fk_qna_seq.equals("")'>
+			insert into qna_tbl(qna_idx,p_userid,q_title,q_context,q_writeday,q_writer,q_viewcnt,q_pwd,status, groupno, fk_qna_seq, depthno)
+			values(seq_qna_tbl.nextval, #{p_userid},#{q_title},#{q_context},default,#{q_writer},default,#{q_pwd}, default, #{groupno}, #{fk_qna_seq}, #{depthno}+1)  
+	 	</if>
+	 </insert>
+
+	 <!-- === #100. 페이징 처리를 안한 검색어가 있는 전체 글목록 보여주기 === 
+	 <select id="boardListSearchQnA" resultType="com.spring.wetre.model.BoardVO" parameterType="HashMap">
+		 select qna_idx, p_userid, q_writer, q_title,  
+		        q_viewcnt, to_char(q_writeday, 'yyyy-mm-dd hh24:mi:ss') as q_writeday
+		 from q_viewcnt
+		 where status = 1
+		 <if test='searchWord != "" '>
+		     and ${subject} like '%'|| #{searchWord} ||'%'
+		 </if>
+		 order by qna_idx desc
+	 </select> -->
+	 
+	 
+
+	 
+	 <select id="getViewQnA" parameterType="String" resultType="com.spring.wetre.model.BoardVO">
+	 	select previousseq, previoussubject, 
+		       qna_idx, p_userid, q_writer, q_title, q_context, q_viewcnt, q_writeday,
+		       nextseq, nextsubject 
+		     , groupno, fk_qna_seq, depthno
+		from 
+		(
+		    select lag(qna_idx, 1) over(order by qna_idx desc) as previousseq
+		         , lag(q_title, 1) over(order by qna_idx desc) as previoussubject
+		         , qna_idx, p_userid, q_writer, q_title, q_context
+		         , q_viewcnt, to_char(q_writeday, 'yyyy-mm-dd hh24:mi:ss') as q_writeday
+		         , lead(qna_idx, 1) over(order by qna_idx desc) as nextseq
+		         , lead(q_title, 1) over(order by qna_idx desc) as nextsubject
+		         , groupno, fk_qna_seq, depthno
+		    from qna_tbl
+		    where status = '1'
+		) V
+		where V.qna_idx = #{qna_idx}
+	 </select>	 
+	 
+	 
+	 <!-- === #66. 글 조회수 1증가 하기 === --> 
+	 <update id="setAddReadCountQnA" parameterType="String">
+	 	update qna_tbl set q_viewcnt = q_viewcnt + 1 
+	 	where status = 1 and qna_idx = #{qna_idx}
+	 </update>
+	 	 
+	 
+	 <!-- === #74. 글수정 및 글삭제시 암호일치 여부 알아오기 === --> 
+	 <select id="checkPWQnA" parameterType="com.spring.wetre.model.BoardVO" resultType="int"> 
+	 	select count(*)
+		from qna_tbl
+		where qna_idx = #{qna_idx} and q_pwd = #{q_pwd}
+	 </select>
+	 
+	 
+	 <!-- === #76. 글 1개를 수정한다. === -->
+	 <update id="updateBoardQnA" parameterType="com.spring.wetre.model.BoardVO">
+	 	update qna_tbl set q_title = #{q_title}
+	 	                  , q_context = #{q_context}
+	 	                  , q_writeday = sysdate 
+	 	where qna_idx = #{qna_idx}
+	 </update>
+	 
+	 
+	 <!-- === #81. 1개글 삭제하기(우리는 update 로 처리하겠다) === -->
+	 <update id="deleteBoardQnA" parameterType="com.spring.wetre.model.BoardVO">
+	 	update qna_tbl set status = 0
+	 	where qna_idx = #{qna_idx}
+	 </update>
+	 
+	<!-- === #115. 검색조건이 있을 경우의 총 게시물 건수(totalCount) === --> 
+	<select id="getTotalCountWithSearchQnA" parameterType="HashMap" resultType="int"> 
+		select count(*)
+		from qna_tbl
+		where status = 1
+		and ${searchType} like '%'|| #{searchWord} ||'%' 
+	</select> 
+	
+	<!--  === #112. 검색조건이 없을 경우의 총 게시물 건수(totalCount) === -->
+	<select id="getTotalCountWithNOsearchQnA" resultType="int">
+		select count(*)
+		from qna_tbl
+		where status = 1
+	</select>  
+	 
+	 
+	<!--  === #118. 페이징 처리한 글목록 가져오기(검색이 있든지 , 검색이 없든지 다 포함한것) === --> 
+	<select id="boardListWithPagingQnA" parameterType="HashMap" resultType="com.spring.wetre.model.BoardVO"> 
+		select qna_idx, p_userid, q_writer, q_title, q_viewcnt, q_writeday,groupno,fk_qna_seq,depthno,rno
+		from 
+		(
+		    select rownum AS rno
+		         , qna_idx, p_userid, q_writer, q_title, q_viewcnt, q_writeday,groupno,fk_qna_seq,depthno
+		    from
+		    (
+		        select qna_idx, p_userid, q_writer, q_title,  
+		               q_viewcnt, to_char(q_writeday, 'yyyy-mm-dd hh24:mi:ss') as q_writeday
+		               ,groupno,fk_qna_seq,depthno
+		        from qna_tbl
+		        where status = 1
+		     <if test='searchWord != "" '>   
+		        and ${searchType} like '%'|| #{searchWord} ||'%'
+		     </if>   
+		        start with fk_qna_seq = 0
+		        connect by prior qna_idx = fk_qna_seq
+		        order siblings by groupno desc, qna_idx asc
+		    ) V
+		) T
+		where rno between #{startRno} and #{endRno}
+	</select>
+	
+	
+	<!--  === #128. qna_tbl 테이블에서 groupno 컬럼의 최대값 구하기 === -->
+	<select id="getGroupnoMaxQnA" resultType="int">
+	    select nvl(max(groupno), 0)
+		from qna_tbl
+	</select>
+	 
+	 <!--  === #106. 검색어 입력시 자동글 완성하기 6 === --> 
+	 <select id="wordSearchShowQnA" parameterType="HashMap" resultType="String"> 
+		 select ${searchType}
+		 from qna_tbl
+		 where lower(${searchType}) like '%'|| lower(#{searchWord}) ||'%'
+	 </select>
+	 
+	<!-- NOTICE 시작 --> 
+	
+	
+		 <!-- === #129. 답변형 게시판의 글쓰기(파일첨부가 없는 글쓰기) === 
+	                  먼저 #56. 을 주석처리한 후 아래처럼 해야 한다. -->
+	<insert id="addNotice" parameterType="com.spring.wetre.model.BoardNoticeVO"> 
+	 	insert into notice(n_idx,n_title,n_context,n_writeday,n_viewcnt,status)
+		values(seq_notice.nextval,#{n_title},#{n_context},default,default,default)
+	</insert>
+
+<!-- 	 === #100. 페이징 처리를 안한 검색어가 있는 전체 글목록 보여주기
+	 <select id="boardListSearchNotice" resultType="com.spring.wetre.model.BoardNoticeVO" parameterType="HashMap">
+		 select n_idx, n_title,  
+		        n_viewcnt, to_char(n_writeday, 'yyyy-mm-dd hh24:mi:ss') as n_writeday
+		 from notice
+		 where status = 1
+		 <if test='searchWord != "" '>
+		     and ${n_title} like '%'|| #{searchWord} ||'%'
+		 </if>
+		 order by n_idx desc
+	 </select> -->
+	 
+	 
+
+	 
+	 <select id="getViewNotice" parameterType="String" resultType="com.spring.wetre.model.BoardNoticeVO">
+	 	select previousseq, previoussubject, 
+		       n_idx, n_title, n_context, n_viewcnt, n_writeday,
+		       nextseq, nextsubject 
+		from 
+		(
+		    select lag(n_idx, 1) over(order by n_idx desc) as previousseq
+		         , lag(n_title, 1) over(order by n_idx desc) as previoussubject
+		         , n_idx, n_title, n_context
+		         , n_viewcnt, to_char(n_writeday, 'yyyy-mm-dd hh24:mi:ss') as n_writeday
+		         , lead(n_idx, 1) over(order by n_idx desc) as nextseq
+		         , lead(n_title, 1) over(order by n_idx desc) as nextsubject
+		    from notice
+		    where status = 1
+		) V
+		where V.n_idx = #{n_idx}
+	 </select>	 
+	 
+	 
+	 <!-- === #66. 글 조회수 1증가 하기 === --> 
+	 <update id="setAddReadCountNotice" parameterType="String">
+	 	update notice set n_viewcnt = n_viewcnt + 1 
+	 	where status = 1 and n_idx = #{n_idx}
+	 </update>
+	 
+	 <!-- === #76. 글 1개를 수정한다. === -->
+	 <update id="updateBoardNotice" parameterType="com.spring.wetre.model.BoardNoticeVO">
+	 	update notice set n_title = #{n_title}
+	 	                  , n_context = #{n_context}
+	 	                  , n_writeday = sysdate 
+	 	where n_idx = #{n_idx}
+	 </update>
+	 
+	 
+	 <!-- === #81. 1개글 삭제하기(우리는 update 로 처리하겠다) === -->
+	 <update id="deleteBoardNotice" parameterType="com.spring.wetre.model.BoardNoticeVO">
+	 	update notice set status = 0
+	 	where n_idx = #{n_idx}
+	 </update>
+	 
+	<!--  === #112. 검색조건이 없을 경우의 총 게시물 건수(totalCount) === -->
+	<select id="getTotalCountWithNOsearchNotice" resultType="int">
+		select count(*)
+		from notice
+		where status = 1
+	</select>  
+	
+	
+	<!-- === #115. 검색조건이 있을 경우의 총 게시물 건수(totalCount) === --> 
+	<select id="getTotalCountWithSearchNotice" parameterType="HashMap" resultType="int"> 
+		select count(*)
+		from notice
+		where status = 1
+		and ${searchType} like '%'|| #{searchWord} ||'%' 
+	</select> 
+	 
+	 
+	<!--  === #118. 페이징 처리한 글목록 가져오기(검색이 있든지 , 검색이 없든지 다 포함한것) === --> 
+	<select id="boardListWithPagingNotice" parameterType="HashMap" resultType="com.spring.wetre.model.BoardNoticeVO"> 
+		select n_idx , n_title, n_viewcnt, n_writeday, rno
+		from 
+		(
+		    select rownum AS rno
+		         , n_idx , n_title, n_viewcnt, n_writeday
+		    from
+		    (
+		        select n_idx, n_title,  
+		               n_viewcnt, to_char(n_writeday, 'yyyy-mm-dd hh24:mi:ss') as n_writeday
+		        from notice
+		        where status = 1
+		     <if test='searchWord != "" '>   
+		        and ${searchType} like '%'|| #{searchWord} ||'%'
+		     </if>   
+		        order by n_idx desc
+		    ) V
+		) T
+		where rno between #{startRno} and #{endRno}
+	</select>
+	
+	
+	<!--  === #106. 검색어 입력시 자동글 완성하기 6 === --> 
+	 <select id="wordSearchShowNotice" parameterType="HashMap" resultType="String"> 
+		 select ${searchType}
+		 from notice
+		 where lower(${searchType}) like '%'|| lower(#{searchWord}) ||'%'
+	 </select>
+	
+	
+	
+
+	
+	
+	 
+	 
+	 
+</mapper>

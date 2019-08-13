@@ -4,19 +4,22 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!-- ==== #00. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 함.) ==== -->
-<mapper namespace="chy">
+<mapper namespace="accommodation">
 
 
 	<!-- #y3. 호텔 목록 뽑기: 검색어 포함, 옵션 포함, 페이징 처리 -->
 	<!-- 주의!!! foreach의 경우에는 값 넣을 때 문자열이면 홑따옴표 붙여줘야 됨!!! -->
  	<select id="getAccList" parameterType="HashMap" resultType="com.spring.wetre.model.AccVO">
-		select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type, region_name
-		from
+		select acc_idx, acc_name, acc_img
+		     , case when length(acc_text) > 30 then substr(acc_text, 1, 28)||'..'
+		                                       else acc_text end AS acc_text
+		     , acc_addr1, acc_addr2, cnt, acc_type, region_name
+		from    
 		    (
 		     select rownum AS RNO, acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
 		          , region_name, region_shortname
 		     from
-		         ( 
+		         (
 		          select distinct acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, cnt, acc_type
 		               , region_name, region_shortname
 		          from
@@ -212,7 +215,7 @@
 	</select>
 	
 
-	<!-- #y5. 리스트 뷰단에 뿌려줄 지역명 및 코드를 불러옴. & #y3. 검색어 자동 완성3: 지역들 뽑아옴. -->
+	<!-- #y3. 검색어 자동 완성3: 지역들 뽑아옴. -->
 	<resultMap type="HashMap" id="regionMap">
 		<result property="region_name"		column="region_name" 		javaType="String"/>
 		<result property="region_shortName"	column="region_shortName"	javaType="String"/>
@@ -226,58 +229,228 @@
 		</if>
 			order by region_code asc
 	</select>
+
+
+
+	<!-- 고유번호를 가지고 해당 숙박시설의 정보를 조회해오기 -->
+	<select id="getOneAccInfomation" parameterType="int" resultType="com.spring.wetre.model.AccVO">
+		select acc_idx, acc_name, acc_img, acc_text, acc_addr1, acc_addr2, acc_grade
+		from acc_tbl
+		where acc_idx = #{acc_idx}
+	</select>
+	
+	<!-- 숙박시설 추가이미지 조회해오기 -->
+	<resultMap type="HashMap" id="accImg">
+		<result property="acc_idx" column="acc_idx" javaType="String" />
+		<result property="ad_img1" column="ad_img1" javaType="String" />
+		<result property="ad_img2" column="ad_img2" javaType="String" />
+		<result property="ad_img3" column="ad_img3" javaType="String" />
+		<result property="ad_img4" column="ad_img4" javaType="String" />
+		<result property="ad_img5" column="ad_img5" javaType="String" />
+	</resultMap>
+	<select id="getAddaccImg" parameterType="int" resultMap="accImg">
+		select acc_idx, ad_img1, ad_img2, ad_img3, ad_img4, ad_img5
+		from addtional_img
+		where acc_idx = #{acc_idx}
+	</select>
+			
+	<!-- 숙박일자 및 숙박 인원 수 조회해오기 -->
+	<resultMap type="HashMap" id="DateAndPeopleCount">
+	 	<result property="acc_idx" column="acc_idx" javaType="String" />
+		<result property="acc_name" column="acc_name" javaType="String" />
+		<result property="ay_fee" column="ay_fee" javaType="String" />
+		<result property="k_fee" column="k_fee" javaType="String" />
+		<result property="book_start" column="book_start" javaType="String" />
+		<result property="book_end" column="book_end" javaType="String" />
+		<result property="rtype_idx" column="rtype_idx" javaType="String" />
+		<result property="rtype_name" column="rtype_name" javaType="String" />
+		<result property="rtype_cnt" column="rtype_cnt" javaType="String" />
+		<result property="totalpay" column="totalpay" javaType="String" />
+		<result property="BM_BR_ADDFEE" column="BM_BR_ADDFEE" javaType="String" />
+		<result property="BM_AMENITY" column="BM_AMENITY" javaType="String" />
+		<result property="BM_DEVICE" column="BM_DEVICE" javaType="String" />
+		<result property="r_idx" column="r_idx" javaType="String" />
+	</resultMap>
+
+		
+	<!-- 구글 지도 사용하기 -->
+	<select id="getAccMapList" parameterType="int" resultType="String">
+		select acc_addr1
+		from acc_tbl
+		where acc_idx = #{acc_idx}
+	</select>
+	
+	
+	<!-- 객실 종류 및 요금 조회하기 -->
+	<select id="getRidx" parameterType="HashMap" resultType="String">
+		select r_idx
+		from room_tbl
+		where fk_acc_idx = #{acc_idx}
+	</select>
+	
+	<select id="getBookingCheck" parameterType="HashMap" resultType="int">
+		select count(*)
+		from booking_ck
+		<if test='ridx != null and !"".equals(ridx)'>
+			<where>
+				<foreach collection="ridx" index="i" open="" separator="or" close="">
+					r_idx = ${ridx[i]}
+				</foreach>
+			</where>
+		</if>
+	</select>
+	
+	<select id="getRoomTypeAndPriceNotBookDays" parameterType="HashMap" resultMap="DateAndPeopleCount">
+		select V.acc_idx, V.acc_name, V.acc_rcnt
+		     , V.ay_fee, V.k_fee
+		     , V.rtype_idx, V.rtype_name, V.rtype_cnt 
+		     , (V.ay_fee * #{adult}) + (V.k_fee * #{kids}) AS TOTALPAY
+		     , V.ad_img1, V.ad_img2, V.ad_img3, V.ad_img4, V.ad_img5
+		     , G.BM_BR_ADDFEE, G.BM_AMENITY, G.BM_DEVICE
+		     , G.r_idx
+			from
+			    (
+			        select A.acc_idx, acc_name, acc_rcnt
+			             , ay_fee, k_fee
+			             , rtype_idx, rtype_name, rtype_cnt 
+			             ,(ay_fee * #{adult}) + (k_fee * #{kids}) AS TOTALPAY
+			             , ad_img1, ad_img2, ad_img3, ad_img4, ad_img5
+			        from view_hotel_list_search A left outer join room_type_tbl B
+			          on A.acc_idx = B.fk_acc_idx
+			          left outer join addtional_img C
+			          on A.acc_idx = C.acc_idx
+			    ) V
+			left outer join
+			    ( select FK_ACC_IDX, E.r_idx, BM_BR_ADDFEE, BM_AMENITY, BM_DEVICE
+			      from room_tbl E left outer join barmenity F
+			      on E.R_IDX = F.R_IDX
+			    ) G
+			    on V.acc_idx = G.FK_ACC_IDX
+			<where> 1 = 1 
+				<if test='acc_idx != null and !"".equals(acc_idx)'>
+					and V.acc_idx = #{acc_idx}
+				</if>
+				<if test='(adult != null and !"".equals(adult)) or (kids != null and !"".equals(kids))'>
+					and ((V.ay_fee * #{adult}) + (V.k_fee * #{kids})) between 1 and 1000000000
+				</if>
+			</where>
+	</select>
+	
+	<select id="getRoomTypeAndPrice" parameterType="HashMap" resultMap="DateAndPeopleCount">
+		select V.acc_idx, V.acc_name, V.acc_rcnt
+      , V.ay_fee, V.k_fee, V.book_start, V.book_end
+      , V.rtype_idx, V.rtype_name, V.rtype_cnt 
+      ,(V.ay_fee * #{adult}) + (V.k_fee * #{kids}) AS TOTALPAY
+      , V.ad_img1, V.ad_img2, V.ad_img3, V.ad_img4, V.ad_img5
+      , G.BM_BR_ADDFEE, G.BM_AMENITY, G.BM_DEVICE
+      , G.r_idx
+		from
+		    (
+		        select A.acc_idx, acc_name, acc_rcnt
+		             , ay_fee, k_fee, book_start, book_end
+		             , rtype_idx, rtype_name, rtype_cnt 
+		             ,(ay_fee * #{adult}) + (k_fee * #{kids}) AS TOTALPAY
+		             , ad_img1, ad_img2, ad_img3, ad_img4, ad_img5
+		        from view_hotel_list_search A left outer join room_type_tbl B
+		          on A.acc_idx = B.fk_acc_idx
+		          left outer join addtional_img C
+		          on A.acc_idx = C.acc_idx
+		    ) V
+		left outer join
+		    ( select FK_ACC_IDX, E.r_idx, BM_BR_ADDFEE, BM_AMENITY, BM_DEVICE
+		      from room_tbl E left outer join barmenity F
+		      on E.R_IDX = F.R_IDX
+		    ) G
+		    on V.acc_idx = G.FK_ACC_IDX
+		<where> 1 = 1 
+			<if test='acc_idx != null and !"".equals(acc_idx)'>
+				and V.acc_idx = #{acc_idx}
+			</if>
+			<if test='(adult != null and !"".equals(adult)) or (kids != null and !"".equals(kids))'>
+				and ((V.ay_fee * #{adult}) + (V.k_fee * #{kids})) between 1 and 1000000000
+			</if>
+			<if test='book_start != null and !"".equals(book_start)'>
+				and (V.book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))				
+			</if>
+			<if test='book_end != null and !"".equals(book_end)'>
+				and (V.book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
+			</if>
+		</where>
+	</select>
+		
+	
+	<!-- ajax를 이용해서 좋아요 출력하기 -->
+	<insert id="insertLike" parameterType="HashMap">
+    	insert into like_tbl(acc_idx, p_userid)
+        values(#{acc_idx}, #{userid})
+    </insert>
+	<delete id="deleteDislike" parameterType="HashMap">
+    	delete from dislike_tbl
+    	where acc_idx = #{acc_idx} and p_userid = #{userid}
+    </delete>
+	
+	<!-- ajax를 이용해서 싫어요 출력하기 -->
+	<insert id="insertDislike" parameterType="HashMap">
+    	insert into dislike_tbl(acc_idx, p_userid)
+        values(#{acc_idx}, #{userid})
+    </insert>
+    <delete id="deleteLike" parameterType="HashMap">
+    	delete from like_tbl
+    	where acc_idx = #{acc_idx} and p_userid = #{userid}
+    </delete>
+    
+    
+    <resultMap type="HashMap" id="likedislikeMap">
+    	<result property="LIKECNT"   column="likecnt"   javaType="String" /> 
+		<result property="DISLIKECNT" column="dislikecnt" javaType="String" />
+    </resultMap>
+    <!-- 좋아요 싫어요 갯수 구하기 -->
+    <select id="getLikeDislikeCount" parameterType="String" resultMap="likedislikeMap">
+    	select (select count(*) 
+				from like_tbl
+				where acc_idx = #{acc_idx}) as likecnt,
+			   (select count(*)
+				from dislike_tbl
+				where acc_idx = #{acc_idx}) as dislikecnt
+		from dual
+    </select>
+    
+    
+    <!-- 댓글쓰기 -->    
+    <insert id="addComment" parameterType="com.spring.wetre.model.CommentVO">
+    	insert into comment_tbl(acc_idx, p_userid, comments, status, com_writedate)
+		values(#{acc_idx}, #{fk_userid}, #{comments}, default, default)
+    </insert>	
+
+    
+    <!-- 댓글 보여주기 -->
+    <select id="commentVOList" parameterType="String" resultType="com.spring.wetre.model.CommentVO">
+        select comments, p_userid AS fk_userid, to_char(com_writedate, 'yyyy-mm-dd') AS com_writedate
+		from comment_tbl 
+		where acc_idx = #{acc_idx}
+		order by com_writedate asc
+	</select>
+
 	
 
-	<!-- #y8-1. 총 방 개수 -->
-	<select id="getTotalRoomCnt" parameterType="HashMap" resultType="int">
-		select rtype_cnt
-		from room_type_tbl
-		where rtype_idx = #{rtype_idx}
+	<!-- 지도 검색 페이지 -->
+	<select id="getStoreMap" resultType="com.spring.wetre.model.AccVO">
+		select acc_idx, acc_name, acc_tel1, acc_tel2, acc_tel3, acc_addr1,acc_img
+		from acc_tbl
+		order by acc_idx asc
 	</select>
 
-	<!-- #y8-1.방 종류 테이블에서 해당 방의 개수를 줄임. -->
-	<update id="minusRoomCnt" parameterType="HashMap">
-		update room_type_tbl set rtype_cnt = rtype_cnt - #{cart_cnt}
-		where rtype_idx = #{rtype_idx}
+
+
+	<!-- 태그테이블 인서트 -->
+	<select id="getAccTagListCnt" parameterType="String">
+		select cnt
+		from acc_tag
+		where acc_idx = #{acc_idx}
+	</select>
+	<update id="updateHotelTagCnt" parameterType="String">
+		update acc_tag set cnt = cnt+1
+		where acc_idx = #{acc_idx}
 	</update>
-
-
-	<!-- #y8-2. 특정 방의 정보가 예약 테이블에 있는지 없는지 확인 -->
-	<select id="getCheckBookInfo" parameterType="HashMap" resultType="int">
-		select count(*)
-		from booking_ck
-		where r_idx = #{r_idx}
-	</select>
-
-	<!-- #y8-2. 예약정보가 있을 경우, 특정 날짜에 예약이 가능한지를 확인 -->
-	<select id="getAvailableRoom" parameterType="HashMap" resultType="int">
-		select count(*)
-		from booking_ck
-		where r_idx = #{r_idx}
-		  and (book_start NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
-		  and (book_end NOT between TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS') and TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'))
-	</select>
-
-	<!-- #y8-2. 예약 테이블에서 해당 방의 예약 날짜를 넣어줌. -->
-	<insert id="insertBookDays" parameterType="HashMap">
-		insert into booking_ck(r_idx, book_start, book_end)
-		values(#{r_idx}, TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS'), TO_DATE(#{book_end},'YYYY-MM-DD HH24:MI:SS'))
-	</insert>
-
-
-	<!-- #y8-3. 예약내용 저장 테이블에 해당 유저의 예약한 내용을 넣어줌. -->
-	<insert id="insertReserveInfo" parameterType="HashMap">
-		insert into cart_tbl( cartno, p_userid, r_idx, cart_price, cart_cnt, fk_acc_name, fk_rtype_name, full_acc_tel, reserver
-							, adultNum, kidsNum, contactInfo, payMethod, requestTxt, full_acc_addr, book_start, book_end, p_name, expectedTime )
-		values(seq_cart_tbl.nextval, #{p_userid}, #{r_idx}, #{cart_price}, #{cart_cnt}, #{fk_acc_name}, #{fk_rtype_name}, #{full_acc_tel}, #{reserver}
-			 , #{adultNum}, #{kidsNum}, #{contactInfo}, #{payMethod}, #{requestTxt}, #{full_acc_addr}
-			 , TO_DATE(#{book_start},'YYYY-MM-DD HH24:MI:SS'), TO_DATE(#{book_end}, 'YYYY-MM-DD HH24:MI:SS'), #{p_name}, #{expectedTime})
-	</insert>
-
-
-
-
-
-
 	
 </mapper>

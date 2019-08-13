@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="wetre">
+
+
+	<!--메인페이지   -->
+	<select id="getRecomList" resultType="com.spring.wetre.model.AccVO">
+		select  acc_name, acc_idx, acc_type,acc_img, region_name
+		     , case when length(acc_text) > 30 then substr(acc_text, 1, 28)||'..'
+		                                       else acc_text end AS acc_text
+		from
+		    (
+		    select row_number() over(order by cnt desc) AS RNO, b.acc_name, b.acc_idx, acc_type,acc_img, acc_text, region_name, cnt
+		    from acc_tag g JOIN acc_tbl b
+            on g.acc_idx = b.acc_idx
+            JOIN area_tbl r 
+            on r.region_code = b.state  
+		    ) V
+		where RNO between 1 and 3
+		order by cnt desc
+	</select>
+	
+	<select id="getRandomONe" parameterType="int" resultType="com.spring.wetre.model.AccVO">
+		   select  acc_name, acc_text, acc_idx
+		   from acc_tbl 
+		   where acc_idx = #{accidx}
+	</select>
+
+</mapper>
