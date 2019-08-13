@@ -31,7 +31,12 @@ public class BoardNoticeController {
 	public ModelAndView list(HttpServletRequest request, ModelAndView mv) {
 			
 		List<BoardNoticeVO> boardList = null;
-			
+		
+		HttpSession session = request.getSession();
+		PersonalVO loginuser = (PersonalVO) session.getAttribute("loginuser");
+		
+		String userid = loginuser.getP_userid();		
+		
 		String str_currentShowPageNo = request.getParameter("currentPageNo"); 
 		
 		int totalCount = 0;         // 총게시물 건수
@@ -138,8 +143,8 @@ public class BoardNoticeController {
 
 		mv.addObject("gobackURL", gobackURL);
 		
-		HttpSession session = request.getSession();
 		session.setAttribute("readCountPermission", "yes"); 
+		mv.addObject("p_userid",userid);
 		
 		mv.addObject("boardList", boardList);
 		mv.setViewName("board/notice.tiles1");

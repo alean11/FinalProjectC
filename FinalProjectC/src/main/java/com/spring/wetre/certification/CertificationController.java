@@ -261,7 +261,7 @@ public class CertificationController {
 		    } catch (CoolsmsException e) {
 		    	n = -1;
 		    }
-		}
+		}            
 		return n;
 	}
 	

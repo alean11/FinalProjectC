@@ -220,9 +220,13 @@
 	</div>
 	
 	
+	<c:if test="${p_userid == 'admin'}">
 	<div align="right" style="width: 100%; border: 0px solid gray; margin-left: 50px; margin-bottom: 20px; " >
 	<button type="button" class="bbtns" onclick="javascript:location.href='notice/noticeAdd.we'">글쓰기</button>
 	</div>
+	</c:if>
+	
+	
 	<!-- === #96. 글검색 폼 추가하기 : 글제목, 글쓴이로 검색을 하도록 한다. === --> 
 	<div style="width: 100%;" align="center">
 		<select name="searchType" id="searchType" style="height: 26px;">
