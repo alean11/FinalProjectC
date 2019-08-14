@@ -35,7 +35,11 @@ public class BoardNoticeController {
 		HttpSession session = request.getSession();
 		PersonalVO loginuser = (PersonalVO) session.getAttribute("loginuser");
 		
-		String userid = loginuser.getP_userid();		
+		if(loginuser != null) {
+			String userid = loginuser.getP_userid();		
+			mv.addObject("p_userid",userid);
+		}
+		
 		
 		String str_currentShowPageNo = request.getParameter("currentPageNo"); 
 		
@@ -144,7 +148,7 @@ public class BoardNoticeController {
 		mv.addObject("gobackURL", gobackURL);
 		
 		session.setAttribute("readCountPermission", "yes"); 
-		mv.addObject("p_userid",userid);
+		
 		
 		mv.addObject("boardList", boardList);
 		mv.setViewName("board/notice.tiles1");
