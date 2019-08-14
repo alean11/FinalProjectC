@@ -8,11 +8,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.spring.wetre.board.service.InterBoardNoticeService;
@@ -242,6 +245,35 @@ public class BoardNoticeController {
 	   return mv;
    }
    
+   
+// === #103. 검색어 입력시 자동글 완성하기 3 === 
+   @RequestMapping(value="/wordSearchShowNotice.we", method= {RequestMethod.GET}, produces="text/plain;charset=UTF-8") 
+   @ResponseBody
+   public String wordSearchShow(HttpServletRequest request) {
+	   
+	   String searchType = request.getParameter("searchType");
+	   String searchWord = request.getParameter("searchWord");
+	   
+	   HashMap<String,String> paraMap = new HashMap<String,String>();
+	   paraMap.put("searchType", searchType);
+	   paraMap.put("searchWord", searchWord);
+	   
+	   List<String> wordList = service.wordSearchShow(paraMap);
+	   
+	   JSONArray jsonArr = new JSONArray();
+	   
+	   if(wordList != null) {
+		   for(String word : wordList) {
+			   JSONObject jsonObj = new JSONObject();
+			   jsonObj.put("word", word);
+			   jsonArr.put(jsonObj);
+		   }
+	   }
+	   
+	   String result = jsonArr.toString();
+	   
+	   return result;
+   }
    
 // === #70. 글수정 페이지 요청 ===
    @RequestMapping(value="/noticeEdit.we", method= {RequestMethod.GET})
