@@ -8,7 +8,7 @@ select * from company_mbr order by idx desc; -- 5830e10608611059ceb92d2ef4d80c79
 UPDATE personal_mbr SET p_pwd = '5830e10608611059ceb92d2ef4d80c790e11a185c84f6284503de72baad765b5' wHERE idx = 1
 
 commit;
-
+select * from personal_mbr
 --------일반회원테이블  : personal_mbr ------------------
 create table personal_mbr
     (idx number not null

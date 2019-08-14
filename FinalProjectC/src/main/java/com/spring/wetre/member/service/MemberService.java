@@ -113,15 +113,12 @@ public class MemberService implements InterMemberService {
 	// 회원가입 (, email 암호화)
 	@Override
 	public int registerMember(PersonalVO pvo ) {
-		String p_pwd = "";
 		String email = "";
 		try {				
 			email = aes.encrypt(pvo.getP_email());
-			p_pwd = aes.encrypt(pvo.getP_pwd());
 		} catch (UnsupportedEncodingException | GeneralSecurityException e) {			
 			e.printStackTrace();
 		}
-		pvo.setP_pwd(p_pwd);
 		pvo.setP_email(email);	
 		int n = dao.registerMember(pvo);
 		return n;
@@ -130,13 +127,6 @@ public class MemberService implements InterMemberService {
 
 	@Override
 	public int updateMember(PersonalVO pvo) {
-		String p_pwd = "";
-		try {				
-			p_pwd = aes.encrypt(pvo.getP_pwd());
-		} catch (UnsupportedEncodingException | GeneralSecurityException e) {			
-			e.printStackTrace();
-		}
-		pvo.setP_pwd(p_pwd);
 		int n = dao.updateMember(pvo);
 		return n;
 	}
